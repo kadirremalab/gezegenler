@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V35 - Yatay Sallanan Engeller)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V36 - Hata Düzeltme ve Estetik)</title>
 <style>
-  /* STİL KODLARI (V34'ten aynı) */
   body {
     overflow: hidden;
     background-color: #34495e; 
@@ -68,7 +67,6 @@
     display: flex;
     align-items: center;
     z-index: 40; 
-    /* V35: Sallanan engeller için transition kaldırıldı */
   }
   .obstacle-segment { 
     background: radial-gradient(circle at 50% 50%, #f7f7f7 0%, #aaa 100%); 
@@ -133,6 +131,27 @@
   .hidden {
     display: none !important;
   }
+
+  /* V36: Oyun Bitti Ekranı Görsel Geliştirmeler */
+  #endScreen h1 {
+      font-size: 4em; 
+      color: #e74c3c; 
+      text-shadow: 0 0 15px rgba(231, 76, 60, 0.8); 
+      margin-bottom: 5px;
+  }
+  #endScreen h2 {
+      font-size: 2.5em; 
+      color: #f1c40f; 
+      margin-top: 10px;
+  }
+  #finalScore {
+      font-weight: bold;
+      font-size: 1.2em;
+  }
+  #endScreen p {
+      font-size: 1.2em;
+      color: #bdc3c7;
+  }
   .btn {
     padding: 15px 30px;
     margin-top: 20px;
@@ -147,6 +166,13 @@
   .btn:hover {
     background-color: #2b8443;
   }
+  #endScreen .btn {
+      background-color: #e74c3c; 
+  }
+  #endScreen .btn:hover {
+      background-color: #c0392b;
+  }
+
   #leaderboardList {
       margin-top: 10px;
       list-style: none;
@@ -170,7 +196,7 @@
 <div id="gameContainer">
     <div id="startScreen" class="screen-overlay">
         <h1>Yer Çekimsiz Gezegen Macerası</h1>
-        <p>Kural: Ortada **tam serbest hareket** ile engellerdeki boşluklardan geç! **Her skorda gezegen değişir**.</p>
+        <p>Kural: Ortada **tam serbest hareket** ile engellerdeki boşluklardan geç! **Her 20 skorda gezegen değişir**.</p>
         <p>Kontroller: **Ok tuşları** veya **WASD**.</p>
         <button id="startButton" class="btn">Oyunu Başlat</button>
     </div>
@@ -219,8 +245,8 @@
   const POWERUP_DURATION = 5000; 
   const POWERUP_SPAWN_INTERVAL = 15000; 
 
-  const HORIZONTAL_OSCILLATION_SPEED = 1; // V35: Yatay hareket hızı
-  const MAX_OSCILLATION_RANGE = 200; // V35: Yatay hareketin maksimum aralığı (sağa 100, sola 100)
+  const HORIZONTAL_OSCILLATION_SPEED = 1; 
+  const MAX_OSCILLATION_RANGE = 200; 
 
   const LEADERBOARD_KEY = 'fallingGameHighScores'; 
   const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
@@ -282,7 +308,7 @@
   }
 
   function playPowerupSound() {
-     // Güçlendirme sesi (powerup_sound.mp3) eklendiğinde burası kullanılabilir
+     // powerup_sound.mp3 dosyası
   }
 
   // --- Güçlendirme Fonksiyonları (V34) ---
@@ -307,7 +333,6 @@
       powerupElement.classList.add('hidden');
       powerupPos = { x: -100, y: -100 };
 
-      // Hızı yarıya indir
       currentObstacleMoveSpeed /= 2;
       body.classList.add('slow-motion-body'); 
 
@@ -317,7 +342,6 @@
   function deactivatePowerup() {
       isPowerupActive = false;
       
-      // Hızı eski haline döndür (zorluk seviyesine göre)
       const difficultyBase = Math.floor(score / 10);
       currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
       body.classList.remove('slow-motion-body'); 
@@ -385,7 +409,8 @@
   }
 
   function updateDifficultyAndTheme() {
-    const newLevel = score; 
+    // V36: Görsel her 20 skorda değişir
+    const newLevel = Math.floor(score / 20); 
     
     if (!isPowerupActive) { 
         const difficultyBase = Math.floor(score / 10);
@@ -551,14 +576,11 @@
 
     gameContainer.appendChild(obstacleRowDiv);
 
-    // V35: Sallanan Engel Özellikleri
-    const isOscillating = Math.random() < 0.3; // %30 ihtimalle sallanan engel
+    const isOscillating = Math.random() < 0.3; 
     let oscillationOffset = 0;
-    let oscillationDirection = 1; // 1: Sağa, -1: Sola
+    let oscillationDirection = 1; 
 
     if (isOscillating) {
-        // Sallanmanın başlangıç konumu (offset) 0'dan başlar
-        // Yönü rastgele belirle
         oscillationDirection = Math.random() < 0.5 ? 1 : -1; 
     }
 
@@ -568,13 +590,13 @@
       gapStartX: gapStartX,
       gapEndX: gapStartX + gapWidth,
       passed: false,
-      isOscillating: isOscillating,      // V35
-      oscillationOffset: oscillationOffset, // V35: Yatay kayma miktarı (px)
-      oscillationDirection: oscillationDirection // V35
+      isOscillating: isOscillating,      
+      oscillationOffset: oscillationOffset, 
+      oscillationDirection: oscillationDirection 
     });
   }
 
-  // --- Ana Oyun Döngüsü (V35 Güncellendi) ---
+  // --- Ana Oyun Döngüsü (V36 Güncellendi) ---
   function update() {
     if (isGameOver) return;
 
@@ -673,12 +695,12 @@
       obs.bottomY += currentObstacleMoveSpeed; 
       obs.element.style.bottom = `${obs.bottomY}px`;
       
-      // V35: Yatay Sallanma Hareketi
+      // Yatay Sallanma Hareketi
       if (obs.isOscillating) {
           obs.oscillationOffset += obs.oscillationDirection * HORIZONTAL_OSCILLATION_SPEED;
           
           if (obs.oscillationOffset > MAX_OSCILLATION_RANGE || obs.oscillationOffset < -MAX_OSCILLATION_RANGE) {
-              obs.oscillationDirection *= -1; // Yönü tersine çevir
+              obs.oscillationDirection *= -1; 
           }
           obs.element.style.transform = `translateX(${obs.oscillationOffset}px)`;
       }
@@ -686,19 +708,17 @@
       const obstacleTopY = window.innerHeight - obs.bottomY - OBSTACLE_HEIGHT;
       const obstacleBottomY = window.innerHeight - obs.bottomY; 
 
-      // V35: Yatay Ofseti (Kaymayı) Çarpışma Kontrolüne Ekle
+      // V36: Çarpışma kontrolü için oyuncu ve boşluk sınırlarını mutlak olarak hesapla.
       const obsGapStartX_Adjusted = obs.gapStartX + obs.oscillationOffset;
       const obsGapEndX_Adjusted = obs.gapEndX + obs.oscillationOffset;
 
-      if (
-        playerPosX + playerSize > 0 && 
-        playerPosX < window.innerWidth && 
-        playerPosY + playerSize > obstacleTopY && 
-        playerPosY < obstacleBottomY 
-      ) {
-        const playerLeft = playerPosX;
-        const playerRight = playerPosX + playerSize;
+      const playerLeft = playerPosX;
+      const playerRight = playerPosX + playerSize;
 
+      if (
+        playerPosY + playerSize > obstacleTopY && 
+        playerPosY < obstacleBottomY             
+      ) {
         // Sallanan boşluk kontrolü
         if (playerRight < obsGapStartX_Adjusted || playerLeft > obsGapEndX_Adjusted) {
             gameOver(); 
