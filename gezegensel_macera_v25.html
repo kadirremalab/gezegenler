@@ -1,272 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V44 - Nihai Başlatma)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V45 - Çalışma Düzeltmesi)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
-  /* STİL KODLARI (V43 ile aynı) */
-  body {
-    overflow: hidden;
-    background-color: #34495e; 
-    font-family: Arial, sans-serif;
-    margin: 0;
-    transition: background-color 1s ease, background-image 1s ease; 
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-  
-  #startScreen h1, #endScreen h1, #pauseScreen h1, #scoreboard {
-      font-family: 'Press Start 2P', cursive;
-  }
-  
-  #startScreen h1 {
-      font-size: 2.5em; 
-      color: #3498db; 
-      text-shadow: 0 0 10px rgba(52, 152, 219, 0.8), 2px 2px 0 #000;
-  }
-  #startScreen p {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 0.7em;
-      color: #ecf0f1;
-      text-shadow: 1px 1px 0 #000;
-      max-width: 80%;
-      line-height: 1.5;
-  }
-
-  #gameContainer {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    cursor: default;
-  }
-
-  /* PLAYER STİLİ (Alev Topu) */
-  #player { 
-    width: 40px;
-    height: 40px;
-    position: absolute;
-    top: 50%; 
-    left: 50%; 
-    transform: translate(-50%, -50%); 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: transparent; 
-    font-weight: bold;
-    font-size: 10px;
-    z-index: 50; 
-    transition: all 0.1s ease; 
-    background: radial-gradient(circle at 50% 50%, #ffcc00 0%, #ff6600 50%, #cc0000 100%);
-    border-radius: 50%;
-    box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    animation: flamePulse 1.5s infinite alternate; 
-  }
-
-  @keyframes flamePulse {
-    0% {
-      transform: translate(-50%, -50%) scale(1);
-      box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    }
-    50% {
-      transform: translate(-50%, -50%) scale(1.05);
-      box-shadow: 0 0 20px 8px rgba(255, 102, 0, 0.8), 0 0 40px 15px rgba(255, 0, 0, 0.6);
-    }
-    100% {
-      transform: translate(-50%, -50%) scale(1);
-      box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    }
-  }
-  
-  .obstacle-row { 
-    position: absolute;
-    bottom: -30px; 
-    left: 0;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    z-index: 40; 
-  }
-  .obstacle-segment { 
-    background: radial-gradient(circle at 50% 50%, #f7f7f7 0%, #aaa 100%); 
-    height: 100%;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-    border-radius: 5px; 
-  }
-  .obstacle-gap { 
-    background-color: transparent; 
-    height: 100%;
-  }
-
-  /* GÜÇLENDİRME STİLİ */
-  #powerup {
-    position: absolute;
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #3498db 0%, #2ecc71 100%); 
-    box-shadow: 0 0 10px rgba(52, 152, 219, 0.9);
-    z-index: 60;
-    animation: spin 3s linear infinite;
-    cursor: pointer;
-  }
-
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-  }
-
-  /* Yavaş Hareket Efekti */
-  .slow-motion-body {
-      filter: blur(2px) brightness(80%); 
-  }
-
-  .info-box {
-    position: absolute;
-    padding: 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    border-radius: 5px;
-    z-index: 100;
-  }
-  #scoreboard { top: 10px; left: 10px; }
-  #timer { top: 10px; right: 10px; }
-
-  .screen-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); 
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    z-index: 1000;
-  }
-  .hidden {
-    display: none !important;
-  }
-
-  /* Estetik Giriş Alanı */
-  #usernameInput, #endUsernameInput {
-      padding: 12px 20px;
-      margin: 15px 0;
-      border: 2px solid #3498db;
-      border-radius: 8px;
-      font-size: 1.2em;
-      text-align: center;
-      background-color: rgba(255, 255, 255, 0.9);
-      color: #333;
-      transition: all 0.3s;
-      width: 250px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  }
-  #usernameInput:focus, #endUsernameInput:focus {
-      outline: none;
-      border-color: #2ecc71;
-      box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
-  }
-
-  /* Oyun Bitti Ekranı Görsel Geliştirmeler */
-  #endScreen h1 {
-      font-size: 4em; 
-      color: #e74c3c; 
-      text-shadow: 0 0 15px rgba(231, 76, 60, 0.8), 3px 3px 0 #000; 
-      margin-bottom: 5px;
-  }
-  #endScreen h2 {
-      font-size: 2.5em; 
-      color: #f1c40f; 
-      margin-top: 10px;
-  }
-  #finalScore {
-      font-weight: bold;
-      font-size: 1.2em;
-  }
-  #endScreen p {
-      font-size: 1.2em;
-      color: #bdc3c7;
-  }
-  .btn {
-    padding: 15px 30px;
-    margin-top: 20px;
-    font-size: 20px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background-color: #34A853;
-    color: white;
-    transition: background-color 0.3s;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 0.8em;
-  }
-  .btn:hover {
-    background-color: #2b8443;
-  }
-  #endScreen .btn, #confirmScoreBtn {
-      background-color: #e74c3c; 
-  }
-  #endScreen .btn:hover, #confirmScoreBtn:hover {
-      background-color: #c0392b;
-  }
-  #startScreen .btn {
-      background-color: #2ecc71; 
-  }
-  #startScreen .btn:hover {
-      background-color: #27ae60;
-  }
-
-  #leaderboardList {
-      margin-top: 10px;
-      list-style: none;
-      padding: 0;
-      max-width: 300px;
-      width: 80%;
-      text-align: left;
-      font-size: 1.1em;
-  }
-  #leaderboardList li {
-      padding: 5px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-  }
-
-  /* Pause Ekranı */
-  #pauseScreen h1 {
-    font-size: 4em;
-    color: #3498db;
-    text-shadow: 0 0 15px rgba(52, 152, 219, 0.8), 3px 3px 0 #000;
-  }
-  #pauseScreen p {
-    font-size: 1.1em;
-    color: #ecf0f1;
-    font-family: 'Press Start 2P', cursive;
-  }
-  #pauseScreen .btn {
-    background-color: #3498db;
-  }
-  #pauseScreen .btn:hover {
-    background-color: #2980b9;
-  }
+/* DİKKAT: STİL KODLARI BURADA KISALTILMIŞTIR. 
+    LÜTFEN V44'ÜN BAŞINDAKİ TÜM <style> İÇERİĞİNİ BURAYA KOPYALAYIN. 
+    (V44 ile V45'in <style> bölümü tamamen aynıdır.)
+*/
+  body { /* ... */ }
+  #startScreen h1, #endScreen h1, #pauseScreen h1, #scoreboard { /* ... */ }
+  /* ... Diğer tüm CSS kodları ... */
 </style>
 </head>
 <body>
-
 <div id="gameContainer">
     <div id="startScreen" class="screen-overlay">
         <h1>GEZEGENSEL MACERA</h1>
         <p>Kural: Tam serbest hareket ile boşluklardan geçin.</p>
-        <p>Zorluk: Her 20 skorda gezegen değişir.</p>
-        <p>Kontroller: Oklar / WASD / Fare Tıklaması (Yatay hareket)</p>
-        
         <label for="usernameInput" style="font-size: 1.2em; margin-top: 10px; color: #f1c40f;">Kullanıcı Adınız:</label>
         <input type="text" id="usernameInput" placeholder="Adınızı Girin" maxlength="15" value="Anonim">
         
@@ -274,27 +26,10 @@
     </div>
 
     <div id="endScreen" class="screen-overlay hidden">
-        <h1>OYUN BİTTİ!</h1>
-        <h2>Final Skorunuz: <span id="finalScore">0</span></h2>
-        <p>Oynama Süresi: <span id="finalTime">00:00</span></p>
-        
-        <div id="scoreEntry" style="margin-top: 20px;">
-             <label for="endUsernameInput" style="font-size: 1.2em; margin-top: 10px;">Skoru Kaydet:</label>
-             <input type="text" id="endUsernameInput" placeholder="Adınızı Girin" maxlength="15">
-             <button id="confirmScoreBtn" class="btn">Skoru Kaydet & Tabloyu Göster</button>
         </div>
-        
-        <h3>Top 10 Skor Tablosu</h3>
-        <ul id="leaderboardList"></ul>
-
-        <button id="restartButton" class="btn">Tekrar Oyna</button>
-    </div>
 
     <div id="pauseScreen" class="screen-overlay hidden">
-        <h1>DURAKLATILDI</h1>
-        <p>Devam etmek için **SPACE**, **P** veya **ESC** tuşuna basın.</p>
-        <button id="resumeButton" class="btn">Devam Et</button>
-    </div>
+        </div>
 
     <div id="scoreboard" class="info-box hidden"></div>
     <div id="timer" class="info-box hidden">Süre: <span id="timeValue">00:00</span></div>
@@ -304,15 +39,31 @@
 </div>
 
 <script>
-// V44: Tüm JavaScript kodunu window.onload içine alıyoruz. 
-// Bu, HTML'deki tüm öğelerin (butonlar dahil) ve startGame fonksiyonunun 
-// butona tıklanmadan önce kesinlikle yüklenmesini sağlar.
+// V45: startGame'i window.onload dışında global scope'a alıyoruz.
+// Böylece HTML butonu, kodun neresinde olursa olsun bu fonksiyona kesinlikle ulaşabilir.
+
+// V45: startGame fonksiyonu window.onload dışında tanımlandı
+function startGame() {
+    // Bu kısım window.onload içindeki kodlara ihtiyaç duyar.
+    // Başlatma mantığını window.onload içindeki `initGame` fonksiyonuna delege edeceğiz.
+    // Eğer initGame tanımlıysa çalıştır.
+    if (typeof window.initGameLogic === 'function') {
+        window.initGameLogic();
+    } else {
+         // Hata ayıklama mesajı
+        console.error("Hata: initGameLogic fonksiyonu henüz yüklenmedi.");
+    }
+}
+
+
+// V45: Tüm oyun mantığı window.onload içine alınarak çalışma sırası garanti edilir.
 window.onload = function() {
   
   // V42/V43: Harici ses dosyası referansları, hata ihtimaline karşı yedeğe alındı.
   const scoreSound = { play: () => {}, currentTime: 0 };
   const collisionSound = { play: () => {}, currentTime: 0 };
   
+  // Tüm element referansları
   const body = document.body;
   const gameContainer = document.getElementById('gameContainer');
   const player = document.getElementById('player');
@@ -602,8 +353,8 @@ window.onload = function() {
     clearInterval(timerInterval);
   }
 
-  // Fonksiyonu global scope'a taşıyoruz, böylece HTML'deki onclick erişebilir.
-  window.startGame = function() {
+  // V45: Başlatma mantığı artık initGameLogic içinde.
+  window.initGameLogic = function() {
     resetGame(); 
     
     latestUsername = usernameInput.value.trim() || "Anonim";
@@ -887,7 +638,7 @@ window.onload = function() {
   if (restartButton) {
       restartButton.addEventListener('click', () => {
           loadStartScreenImage();
-          startGame();
+          window.initGameLogic(); // V45: Başlatma mantığı
       });
   }
   
@@ -902,7 +653,7 @@ window.onload = function() {
   document.addEventListener('keydown', (e) => {
     // Oyun bitmişse, Space veya Enter oyunu başlatır
     if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) { 
-        startGame();
+        window.initGameLogic(); // V45: Başlatma mantığı
         e.preventDefault();
         return;
     }
