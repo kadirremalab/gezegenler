@@ -638,4 +638,15 @@
       document.addEventListener('keyup', (e) => {
         if (!isGameOver) {
             if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = false;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = false;
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = false;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = false;
+
+            keys[e.code] = false;
+        }
+      });
+  });
+</script>
+
+</body>
+</html>
