@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V33 - Ses Efektleri Eklendi)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V34 - Zaman Bükücü Güçlendirmesi)</title>
 <style>
-  /* STİL KODLARI (V32'den aynı) */
+  /* STİL KODLARI (V33'ten aynı) */
   body {
     overflow: hidden;
     background-color: #34495e; 
@@ -78,6 +78,29 @@
   .obstacle-gap { 
     background-color: transparent; 
     height: 100%;
+  }
+
+  /* V34: YENİ GÜÇLENDİRME STİLİ */
+  #powerup {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #3498db 0%, #2ecc71 100%); /* Mavi-Yeşil Gradient */
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.9);
+    z-index: 60;
+    animation: spin 3s linear infinite;
+    cursor: pointer;
+  }
+
+  @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+  }
+
+  /* V34: Yavaş Hareket Efekti */
+  .slow-motion-body {
+      filter: blur(2px) brightness(80%); /* Hafif bulanıklık ve karartma */
   }
 
   .info-box {
@@ -166,7 +189,7 @@
     <div id="timer" class="info-box hidden">Süre: <span id="timeValue">00:00</span></div>
     
     <div id="player"></div>
-</div>
+    <div id="powerup" class="hidden"></div> </div>
 
 <audio id="scoreSound" src="score_sound.mp3" preload="auto"></audio>
 <audio id="collisionSound" src="collision_sound.mp3" preload="auto"></audio>
@@ -176,8 +199,8 @@
   const gameContainer = document.getElementById('gameContainer');
   const player = document.getElementById('player');
   const leaderboardList = document.getElementById('leaderboardList'); 
+  const powerupElement = document.getElementById('powerup'); // V34: Güçlendirme elementi
   
-  // V33: Ses elementleri
   const scoreSound = document.getElementById('scoreSound');
   const collisionSound = document.getElementById('collisionSound');
   
@@ -189,6 +212,11 @@
   const minGapWidth = 80; 
   const maxGapWidth = 150; 
   const initialObstacleMoveSpeed = 2; 
+  
+  const POWERUP_SIZE = 25; // V34: Güçlendirme Boyutu
+  const POWERUP_DURATION = 5000; // 5 saniye sürecek
+  const POWERUP_SPAWN_INTERVAL = 15000; // Her 15 saniyede bir spawn olabilir
+
   const LEADERBOARD_KEY = 'fallingGameHighScores'; 
   const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
   
@@ -227,14 +255,16 @@
   let timerInterval;
   let animationFrameId;
   let lastObstacleSpawnTime = 0;
+  let lastPowerupSpawnTime = 0; // V34: Güçlendirme zamanlayıcısı
   let obstacles = []; 
   let currentLevel = 0; 
   let currentObstacleColor = themes[0].obstacleColor; 
+  let isPowerupActive = false; // V34: Güçlendirme durumu
+  let powerupPos = { x: -100, y: -100 }; // V34: Güçlendirme konumu (başlangıçta ekran dışında)
 
-  // V33: Ses çalma fonksiyonları
   function playScoreSound() {
     if (scoreSound) {
-        scoreSound.currentTime = 0; // Sesin baştan başlamasını sağlar
+        scoreSound.currentTime = 0; 
         scoreSound.play().catch(e => console.error("Skor sesi çalınamadı:", e));
     }
   }
@@ -246,7 +276,53 @@
     }
   }
 
+  // V34: Güçlendirme Çalma Sesi (eğer eklerseniz kullanırsınız)
+  function playPowerupSound() {
+     // powerup_sound.mp3 dosyasını eklerseniz burayı kullanın
+  }
 
+  // --- Güçlendirme Fonksiyonları (V34) ---
+
+  function spawnPowerup() {
+      if (!isGameOver) {
+          powerupPos.x = Math.random() * (window.innerWidth - POWERUP_SIZE);
+          powerupPos.y = Math.random() * (window.innerHeight - OBSTACLE_HEIGHT - POWERUP_SIZE * 2) + OBSTACLE_HEIGHT;
+          
+          powerupElement.style.left = `${powerupPos.x}px`;
+          powerupElement.style.top = `${powerupPos.y}px`;
+          powerupElement.classList.remove('hidden');
+          lastPowerupSpawnTime = Date.now();
+      }
+  }
+
+  function activatePowerup() {
+      if (isPowerupActive) return;
+      playPowerupSound(); // Güçlendirme sesi
+      isPowerupActive = true;
+      
+      // Güçlendirme toplandı, ekrandan kaldır
+      powerupElement.classList.add('hidden');
+      powerupPos = { x: -100, y: -100 };
+
+      // Hızı yarıya indir
+      currentObstacleMoveSpeed /= 2;
+      body.classList.add('slow-motion-body'); // Görsel efekt ekle
+
+      // 5 saniye sonra deaktive et
+      setTimeout(deactivatePowerup, POWERUP_DURATION);
+  }
+
+  function deactivatePowerup() {
+      isPowerupActive = false;
+      // Hızı eski haline döndür
+      // Mevcut zorluk seviyesine göre hızı yeniden hesapla
+      const difficultyBase = Math.floor(score / 10);
+      currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
+      body.classList.remove('slow-motion-body'); // Görsel efekti kaldır
+  }
+
+  // --- Oyun Kontrol Fonksiyonları (V34) ---
+  
   function getHighScores() {
     const scores = localStorage.getItem(LEADERBOARD_KEY);
     return scores ? JSON.parse(scores) : [];
@@ -309,11 +385,13 @@
   function updateDifficultyAndTheme() {
     const newLevel = score; 
     
-    const difficultyBase = Math.floor(score / 10);
-    currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
-    currentThrustSpeed = initialThrustSpeed + difficultyBase * 0.1;
+    if (!isPowerupActive) { // Güçlendirme aktif değilse zorluğu ayarla
+        const difficultyBase = Math.floor(score / 10);
+        currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
+        currentThrustSpeed = initialThrustSpeed + difficultyBase * 0.1;
+    }
 
-    let newInterval = 1500 - difficultyBase * 100; 
+    let newInterval = 1500 - Math.floor(score / 10) * 100; 
     obstacleSpawnInterval = Math.max(newInterval, 600); 
 
     if (newLevel !== currentLevel) {
@@ -329,6 +407,7 @@
     startTime = Date.now();
     timerInterval = setInterval(updateTimer, 1000);
     lastObstacleSpawnTime = Date.now(); 
+    lastPowerupSpawnTime = Date.now(); // V34: Başlangıçta güçlendirmeyi başlat
   }
   function updateTimer() {
     if (isGameOver) return;
@@ -346,9 +425,15 @@
   function resetGame() {
     score = 0;
     currentLevel = 0;
+    
+    // V34: Hızları sıfırla ve güçlendirmeyi devre dışı bırak
     currentThrustSpeed = initialThrustSpeed;
     currentObstacleMoveSpeed = initialObstacleMoveSpeed;
     obstacleSpawnInterval = 1500;
+    isPowerupActive = false;
+    body.classList.remove('slow-motion-body');
+    powerupElement.classList.add('hidden');
+    powerupPos = { x: -100, y: -100 };
     
     keys = {};
     velocityX = 0; 
@@ -392,6 +477,7 @@
     document.getElementById('timer').classList.remove('hidden');
 
     lastObstacleSpawnTime = Date.now(); 
+    lastPowerupSpawnTime = Date.now();
     animationFrameId = requestAnimationFrame(update);
   }
 
@@ -399,11 +485,16 @@
     if (isGameOver) return;
     isGameOver = true;
     
-    playCollisionSound(); // V33: Çarpışma sesi çalındı
+    playCollisionSound(); 
+    
+    // V34: Güçlendirme etkisini hemen kaldır
+    isPowerupActive = false;
+    body.classList.remove('slow-motion-body');
+    powerupElement.classList.add('hidden'); 
     
     clearInterval(timerInterval);
     cancelAnimationFrame(animationFrameId);
-    // ... (Kullanıcı adı isteme ve skor kaydetme kısmı)
+    
     let username = prompt("Oyun Bitti! Lütfen bir kullanıcı adı girin:", "Anonim");
     if (username === null || username.trim() === "") {
         username = "Anonim";
@@ -469,6 +560,7 @@
     });
   }
 
+  // --- Ana Oyun Döngüsü (V34 Güncellendi) ---
   function update() {
     if (isGameOver) return;
 
@@ -530,6 +622,31 @@
     player.style.left = `${playerPosX}px`;
     player.style.top = `${playerPosY}px`; 
 
+    // V34: Güçlendirme Oluşturma
+    if (gameInteractionStarted && Date.now() - lastPowerupSpawnTime > POWERUP_SPAWN_INTERVAL && powerupElement.classList.contains('hidden')) {
+        spawnPowerup();
+    }
+
+    // V34: Güçlendirme Çarpışma Kontrolü
+    if (!powerupElement.classList.contains('hidden')) {
+        const pLeft = playerPosX;
+        const pRight = playerPosX + playerSize;
+        const pTop = playerPosY;
+        const pBottom = playerPosY + playerSize;
+
+        const puLeft = powerupPos.x;
+        const puRight = powerupPos.x + POWERUP_SIZE;
+        const puTop = powerupPos.y;
+        const puBottom = powerupPos.y + POWERUP_SIZE;
+
+        if (
+            pRight > puLeft && pLeft < puRight &&
+            pBottom > puTop && pTop < puBottom
+        ) {
+            activatePowerup();
+        }
+    }
+
     // Engel oluşturma
     if (gameInteractionStarted && Date.now() - lastObstacleSpawnTime > obstacleSpawnInterval) { 
       createObstacle();
@@ -562,7 +679,7 @@
 
       if (obs.bottomY > window.innerHeight && !obs.passed) {
         score++;
-        playScoreSound(); // V33: Skor sesi çalındı
+        playScoreSound(); 
         document.getElementById('scoreboard').textContent = `${themes[currentLevel % themes.length].name} | Skor: ${score}`;
         obs.passed = true;
       }
@@ -576,7 +693,7 @@
     animationFrameId = requestAnimationFrame(update);
   }
 
-  // --- Olay Dinleyicileri ---
+  // --- Olay Dinleyicileri (V34) ---
   document.addEventListener('DOMContentLoaded', () => {
       loadStartScreenImage();
       resetGame(); 
@@ -595,7 +712,6 @@
           });
       }
       
-      // Mause Kontrolleri
       gameContainer.addEventListener('mousedown', (e) => {
         if (isGameOver) return; 
         const clickX = e.clientX;
@@ -616,7 +732,6 @@
         keys['ArrowRight'] = false;
       });
 
-      // Klavye Kontrolleri
       document.addEventListener('keydown', (e) => {
         if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) { 
             startGame();
