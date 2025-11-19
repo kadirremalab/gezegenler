@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V28 - Final Görsel Entegreli)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V29 - Final Görsel Çözüm)</title>
 <style>
   /* STİL KODLARI (Aynı Kaldı) */
   body {
@@ -165,33 +165,40 @@
   const LEADERBOARD_KEY = 'fallingGameHighScores'; 
   const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
   
-  // V28: GÖRSEL BASE URL'Sİ TANIMLANDI VE AKTİF EDİLDİ
+  // V29: GÖRSEL ADRESİ İÇİN TEMEL URL TANIMLANDI VE BÜYÜK/KÜÇÜK HARF UYUMLU OLDUĞU VARSAYILDI.
   const BASE_URL = 'https://kadirremalab.github.io/gezegenler/';
-  const IMAGE_EXTENSION = '.jpeg'; // Dosya uzantınızın .jpeg olduğunu varsayıyoruz.
+  const IMAGE_EXTENSION = '.jpeg'; // Kontrolümüz sonrası doğru uzantı
+  
+  // V29: Görsel URL'sini oluşturan güvenilir fonksiyon
+  function getImageUrl(index) {
+      // Her zaman güncel görselin çekilmesi için cache buster eklendi
+      const cacheBuster = Date.now();
+      return `url('${BASE_URL}${index}-donusturuldugu-kaynak-png${IMAGE_EXTENSION}?v=${cacheBuster}')`;
+  }
   
   // --- Gezegen Temaları Dizisi (Görsel Yüklemeleri Aktif Edildi) ---
   const themes = [
-    // 0. İNDİS: (Ana Menü/Skor 0-1 arası)
-    { name: "Level 1", bgColor: "#34495e", bgImage: `url('${BASE_URL}0-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#2ecc71", playerStyle: "50%" }, 
-    // 1. İNDİS: (Skor 1-2 arası)
-    { name: "Level 2", bgColor: "#7f8c8d", bgImage: `url('${BASE_URL}1-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#c0392b", playerStyle: "10%" }, 
+    // 0. İNDİS: ANA MENÜ GÖRSELİ
+    { name: "Level 1", bgColor: "#34495e", bgImage: getImageUrl(0), playerColor: "#2ecc71", playerStyle: "50%" }, 
+    // 1. İNDİS: 
+    { name: "Level 2", bgColor: "#7f8c8d", bgImage: getImageUrl(1), playerColor: "#c0392b", playerStyle: "10%" }, 
     // 2. İNDİS: 
-    { name: "Level 3", bgColor: "#e67e22", bgImage: `url('${BASE_URL}2-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#f1c40f", playerStyle: "50%" }, 
-    // 3. İNDİS:
-    { name: "Level 4", bgColor: "#2980b9", bgImage: `url('${BASE_URL}3-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#1abc9c", playerStyle: "3px solid white" }, 
+    { name: "Level 3", bgColor: "#e67e22", bgImage: getImageUrl(2), playerColor: "#f1c40f", playerStyle: "50%" }, 
+    // 3. İNDİS: 
+    { name: "Level 4", bgColor: "#2980b9", bgImage: getImageUrl(3), playerColor: "#1abc9c", playerStyle: "3px solid white" }, 
     // 4. İNDİS: 
-    { name: "Level 5", bgColor: "#c0392b", bgImage: `url('${BASE_URL}4-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#e74c3c", playerStyle: "10%" }, 
+    { name: "Level 5", bgColor: "#c0392b", bgImage: getImageUrl(4), playerColor: "#e74c3c", playerStyle: "10%" }, 
     // 5. İNDİS:
-    { name: "Level 6", bgColor: "#e9c46a", bgImage: `url('${BASE_URL}5-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#f39c12", playerStyle: "0%" }, 
+    { name: "Level 6", bgColor: "#e9c46a", bgImage: getImageUrl(5), playerColor: "#f39c12", playerStyle: "0%" }, 
     // 6. İNDİS: 
-    { name: "Level 7", bgColor: "#f39c12", bgImage: `url('${BASE_URL}6-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#e74c3c", playerStyle: "50%" }, 
+    { name: "Level 7", bgColor: "#f39c12", bgImage: getImageUrl(6), playerColor: "#e74c3c", playerStyle: "50%" }, 
     // 7. İNDİS: 
-    { name: "Level 8", bgColor: "#bdc3c7", bgImage: `url('${BASE_URL}7-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#3498db", playerStyle: "15%" }, 
+    { name: "Level 8", bgColor: "#bdc3c7", bgImage: getImageUrl(7), playerColor: "#3498db", playerStyle: "15%" }, 
     // 8. İNDİS: 
-    { name: "Level 9", bgColor: "#3498db", bgImage: `url('${BASE_URL}8-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#2980b9", playerStyle: "50%" } 
+    { name: "Level 9", bgColor: "#3498db", bgImage: getImageUrl(8), playerColor: "#2980b9", playerStyle: "50%" } 
   ];
 
-  // --- Değişkenler ---
+  // --- Değişkenler ve Diğer Fonksiyonlar (Aynı Kaldı) ---
   let currentThrustSpeed = initialThrustSpeed; 
   let currentObstacleMoveSpeed = initialObstacleMoveSpeed;
   let obstacleSpawnInterval = 1500; 
@@ -210,7 +217,6 @@
   let obstacles = []; 
   let currentLevel = 0; 
 
-  // --- Yardımcı Fonksiyonlar ---
   function getHighScores() {
     const scores = localStorage.getItem(LEADERBOARD_KEY);
     return scores ? JSON.parse(scores) : [];
@@ -248,8 +254,8 @@
       const themeIndex = level % themes.length; 
       const theme = themes[themeIndex];
       
-      // V28: Görsel Aktif edildi
-      if (theme.bgImage) {
+      // GÖRSEL VEYA RENK UYGULAMASI
+      if (theme.bgImage && theme.bgImage.includes('url')) {
           body.style.backgroundImage = theme.bgImage;
           body.style.backgroundColor = theme.bgColor; 
           body.style.backgroundSize = 'cover';
@@ -272,7 +278,6 @@
   }
   
   function loadStartScreenImage() {
-    // V28: Görsel Aktif edildi
     applyTheme(0);
   }
 
