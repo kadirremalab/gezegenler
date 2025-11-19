@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V27.1 - Düzeltme & Görselsiz)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V28 - Final Görsel Entegreli)</title>
 <style>
   /* STİL KODLARI (Aynı Kaldı) */
   body {
@@ -165,19 +165,30 @@
   const LEADERBOARD_KEY = 'fallingGameHighScores'; 
   const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
   
-  // V27.1: GÖRSEL URL'LERİNİN HEPSİ DEVREDİDIŞI BIRAKILDI. Sadece renkler kullanılıyor.
+  // V28: GÖRSEL BASE URL'Sİ TANIMLANDI VE AKTİF EDİLDİ
+  const BASE_URL = 'https://kadirremalab.github.io/gezegenler/';
+  const IMAGE_EXTENSION = '.jpeg'; // Dosya uzantınızın .jpeg olduğunu varsayıyoruz.
   
-  // --- Gezegen Temaları Dizisi (Sadece Renkler Kullanılıyor) ---
+  // --- Gezegen Temaları Dizisi (Görsel Yüklemeleri Aktif Edildi) ---
   const themes = [
-    { name: "Level 1 (Renk)", bgColor: "#34495e", bgImage: 'none', playerColor: "#2ecc71", playerStyle: "50%" }, 
-    { name: "Level 2 (Renk)", bgColor: "#7f8c8d", bgImage: 'none', playerColor: "#c0392b", playerStyle: "10%" }, 
-    { name: "Level 3 (Renk)", bgColor: "#e67e22", bgImage: 'none', playerColor: "#f1c40f", playerStyle: "50%" }, 
-    { name: "Level 4 (Renk)", bgColor: "#2980b9", bgImage: 'none', playerColor: "#1abc9c", playerStyle: "3px solid white" }, 
-    { name: "Level 5 (Renk)", bgColor: "#c0392b", bgImage: 'none', playerColor: "#e74c3c", playerStyle: "10%" }, 
-    { name: "Level 6 (Renk)", bgColor: "#e9c46a", bgImage: 'none', playerColor: "#f39c12", playerStyle: "0%" }, 
-    { name: "Level 7 (Renk)", bgColor: "#f39c12", bgImage: 'none', playerColor: "#e74c3c", playerStyle: "50%" }, 
-    { name: "Level 8 (Renk)", bgColor: "#bdc3c7", bgImage: 'none', playerColor: "#3498db", playerStyle: "15%" }, 
-    { name: "Level 9 (Renk)", bgColor: "#3498db", bgImage: 'none', playerColor: "#2980b9", playerStyle: "50%" } 
+    // 0. İNDİS: (Ana Menü/Skor 0-1 arası)
+    { name: "Level 1", bgColor: "#34495e", bgImage: `url('${BASE_URL}0-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#2ecc71", playerStyle: "50%" }, 
+    // 1. İNDİS: (Skor 1-2 arası)
+    { name: "Level 2", bgColor: "#7f8c8d", bgImage: `url('${BASE_URL}1-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#c0392b", playerStyle: "10%" }, 
+    // 2. İNDİS: 
+    { name: "Level 3", bgColor: "#e67e22", bgImage: `url('${BASE_URL}2-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#f1c40f", playerStyle: "50%" }, 
+    // 3. İNDİS:
+    { name: "Level 4", bgColor: "#2980b9", bgImage: `url('${BASE_URL}3-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#1abc9c", playerStyle: "3px solid white" }, 
+    // 4. İNDİS: 
+    { name: "Level 5", bgColor: "#c0392b", bgImage: `url('${BASE_URL}4-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#e74c3c", playerStyle: "10%" }, 
+    // 5. İNDİS:
+    { name: "Level 6", bgColor: "#e9c46a", bgImage: `url('${BASE_URL}5-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#f39c12", playerStyle: "0%" }, 
+    // 6. İNDİS: 
+    { name: "Level 7", bgColor: "#f39c12", bgImage: `url('${BASE_URL}6-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#e74c3c", playerStyle: "50%" }, 
+    // 7. İNDİS: 
+    { name: "Level 8", bgColor: "#bdc3c7", bgImage: `url('${BASE_URL}7-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#3498db", playerStyle: "15%" }, 
+    // 8. İNDİS: 
+    { name: "Level 9", bgColor: "#3498db", bgImage: `url('${BASE_URL}8-donusturuldugu-kaynak-png${IMAGE_EXTENSION}')`, playerColor: "#2980b9", playerStyle: "50%" } 
   ];
 
   // --- Değişkenler ---
@@ -189,7 +200,7 @@
   let velocityX = 0; 
   let velocityY = 0; 
   let score = 0;
-  let isGameOver = true; // BAŞLANGIÇTA TRUE OLMALI
+  let isGameOver = true; 
   let gameInteractionStarted = false; 
   let keys = {}; 
   let startTime = 0;
@@ -199,7 +210,7 @@
   let obstacles = []; 
   let currentLevel = 0; 
 
-  // --- Skor Tablosu Fonksiyonları ---
+  // --- Yardımcı Fonksiyonlar ---
   function getHighScores() {
     const scores = localStorage.getItem(LEADERBOARD_KEY);
     return scores ? JSON.parse(scores) : [];
@@ -237,11 +248,16 @@
       const themeIndex = level % themes.length; 
       const theme = themes[themeIndex];
       
-      // V27.1: Görsel yerine sadece renk kullanıldı
-      body.style.backgroundImage = 'none';
-      body.style.backgroundColor = theme.bgColor; 
-      body.style.backgroundSize = 'cover';
-      body.style.backgroundPosition = 'center';
+      // V28: Görsel Aktif edildi
+      if (theme.bgImage) {
+          body.style.backgroundImage = theme.bgImage;
+          body.style.backgroundColor = theme.bgColor; 
+          body.style.backgroundSize = 'cover';
+          body.style.backgroundPosition = 'center';
+      } else {
+          body.style.backgroundImage = 'none';
+          body.style.backgroundColor = theme.bgColor;
+      }
       
       player.style.backgroundColor = theme.playerColor;
       
@@ -256,11 +272,8 @@
   }
   
   function loadStartScreenImage() {
-    // V27.1: Görsel yerine sadece renk kullanıldı
-    body.style.backgroundImage = 'none';
-    body.style.backgroundColor = themes[0].bgColor; 
-    body.style.backgroundSize = 'cover';
-    body.style.backgroundPosition = 'center';
+    // V28: Görsel Aktif edildi
+    applyTheme(0);
   }
 
   function updateDifficultyAndTheme() {
@@ -280,7 +293,6 @@
   }
 
   function startTiming() {
-    // startTiming'e yalnızca oyun başlatma komutundan sonra girilebilir.
     if (isGameOver || gameInteractionStarted) return;
     
     gameInteractionStarted = true;
@@ -301,7 +313,6 @@
     document.getElementById('timeValue').textContent = formattedTime;
   }
 
-  // ⚠️ V27.1: Resetleme mantığı güçlendirildi
   function resetGame() {
     score = 0;
     currentLevel = 0;
@@ -327,7 +338,6 @@
     obstacles.forEach(obs => obs.element.remove());
     obstacles = [];
     
-    // Oyun durum değişkenlerini sıfırla
     isGameOver = true; 
     gameInteractionStarted = false; 
     if (animationFrameId) {
@@ -337,18 +347,14 @@
     clearInterval(timerInterval);
   }
 
-  // ⚠️ V27.1: Başlatma mantığı güçlendirildi
   function startGame() {
-    // 1. Tamamen sıfırlama yap
     resetGame(); 
     
-    // 2. Başlatma durumlarını ayarla
     isGameOver = false;
     
     const startScreen = document.getElementById('startScreen');
     const endScreen = document.getElementById('endScreen');
     
-    // 3. Ekranları gizle/göster
     if (startScreen) startScreen.classList.add('hidden');
     if (endScreen) endScreen.classList.add('hidden');
     
@@ -538,7 +544,6 @@
   document.addEventListener('DOMContentLoaded', () => {
       loadStartScreenImage();
 
-      // Sayfa yüklendiğinde oyunun kapalı olduğundan emin olmak için
       resetGame(); 
 
       const startButton = document.getElementById('startButton');
