@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V40 - Başlatma Garantisi)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V42 - Başlatma Garantisi)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
   body {
     overflow: hidden;
@@ -21,7 +22,7 @@
   }
   
   #startScreen h1 {
-      font-size: 2.5em; /* Daha okunaklı olması için küçültüldü */
+      font-size: 2.5em; 
       color: #3498db; 
       text-shadow: 0 0 10px rgba(52, 152, 219, 0.8), 2px 2px 0 #000;
   }
@@ -302,10 +303,14 @@
     <div id="powerup" class="hidden"></div> 
 </div>
 
-<audio id="scoreSound" src="score_sound.mp3" preload="auto"></audio>
-<audio id="collisionSound" src="collision_sound.mp3" preload="auto"></audio>
-
 <script>
+  // V42: Ses referansları kaldırıldığı için, hata vermemesi için tanımları güncelledik.
+  const scoreSound = { play: () => {}, currentTime: 0 };
+  const collisionSound = { play: () => {}, currentTime: 0 };
+  
+  // Eğer dosyanızda ses dosyaları (score_sound.mp3 ve collision_sound.mp3) varsa, 
+  // üstteki yorum satırlarını kaldırıp bu iki satırı silebilirsiniz.
+  
   const body = document.body;
   const gameContainer = document.getElementById('gameContainer');
   const player = document.getElementById('player');
@@ -318,8 +323,6 @@
   const endUsernameInput = document.getElementById('endUsernameInput'); 
   const confirmScoreBtn = document.getElementById('confirmScoreBtn'); 
   
-  const scoreSound = document.getElementById('scoreSound');
-  const collisionSound = document.getElementById('collisionSound');
   
   // --- Sabitler ---
   const playerSize = 40;
@@ -385,17 +388,11 @@
   let latestUsername = "Anonim"; 
 
   function playScoreSound() {
-    if (scoreSound) {
-        scoreSound.currentTime = 0; 
-        scoreSound.play().catch(e => console.error("Skor sesi çalınamadı:", e));
-    }
+    scoreSound.play().catch(e => console.error("Skor sesi çalınamadı (V42: Ses dosyası olmadan çalışmaya devam ediyor):", e));
   }
 
   function playCollisionSound() {
-    if (collisionSound) {
-        collisionSound.currentTime = 0; 
-        collisionSound.play().catch(e => console.error("Çarpışma sesi çalınamadı:", e));
-    }
+    collisionSound.play().catch(e => console.error("Çarpışma sesi çalınamadı (V42: Ses dosyası olmadan çalışmaya devam ediyor):", e));
   }
 
   function playPowerupSound() {
@@ -558,7 +555,6 @@
     }
   }
 
-  // V40: Başlatma Garantisi için Güncellendi
   function resetGame() {
     score = 0;
     currentLevel = 0;
@@ -603,7 +599,6 @@
     clearInterval(timerInterval);
   }
 
-  // V40: Başlatma Garantisi için Güncellendi
   function startGame() {
     resetGame(); 
     
@@ -864,4 +859,80 @@
       if (obs.bottomY > window.innerHeight && !obs.passed) {
         score++;
         playScoreSound(); 
-        document.getElementById('scoreboard').textContent = `${themes[currentLevel %
+        document.getElementById('scoreboard').textContent = `${themes[currentLevel % themes.length].name} | Skor: ${score}`;
+        obs.passed = true;
+      }
+
+      if (obs.bottomY > window.innerHeight) {
+        obs.element.remove();
+        obstacles.splice(i, 1);
+        i--; 
+      }
+    }
+    animationFrameId = requestAnimationFrame(update);
+  }
+
+  // --- Olay Dinleyicileri ---
+  document.addEventListener('DOMContentLoaded', () => {
+      loadStartScreenImage();
+      resetGame(); 
+
+      const startButton = document.getElementById('startButton');
+      const restartButton = document.getElementById('restartButton');
+      const resumeButton = document.getElementById('resumeButton'); 
+
+      if (startButton) {
+          startButton.addEventListener('click', startGame);
+      } 
+
+      if (restartButton) {
+          restartButton.addEventListener('click', () => {
+              loadStartScreenImage();
+              startGame();
+          });
+      }
+      
+      if (resumeButton) {
+          resumeButton.addEventListener('click', togglePause);
+      }
+      
+      if (confirmScoreBtn) {
+          confirmScoreBtn.addEventListener('click', confirmAndShowLeaderboard);
+      }
+
+      document.addEventListener('keydown', (e) => {
+        // Oyun bitmişse, Space veya Enter oyunu başlatır
+        if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) { 
+            startGame();
+            e.preventDefault();
+            return;
+        }
+
+        if (!isGameOver) {
+            // Space, P veya Esc ile oyunu duraklat/devam et
+            if (e.code === 'KeyP' || e.code === 'Escape' || e.code === 'Space') { 
+                togglePause();
+                e.preventDefault(); 
+                return;
+            }
+
+            if (isPaused) return; // Duraklatılmışsa hareket komutlarını yok say
+
+            if (MOVEMENT_KEYS.includes(e.code)) {
+                 startTiming(); 
+            }
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = true;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = true;
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = true;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = true;
+
+            keys[e.code] = true;
+        }
+      });
+
+      document.addEventListener('keyup', (e) => {
+        if (!isGameOver && !isPaused) {
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = false;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = false;
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = false;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] =
