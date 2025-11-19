@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V32 - Daha Estetik Engeller)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V33 - Ses Efektleri Eklendi)</title>
 <style>
-  /* STİL KODLARI */
+  /* STİL KODLARI (V32'den aynı) */
   body {
     overflow: hidden;
     background-color: #34495e; 
@@ -23,7 +23,7 @@
     cursor: default;
   }
 
-  /* PLAYER STİLİ (Alev Topu - V30'dan Aynı) */
+  /* PLAYER STİLİ (Alev Topu) */
   #player { 
     width: 40px;
     height: 40px;
@@ -59,23 +59,21 @@
       box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
     }
   }
-  /* V32: ENGEL STİLİ GÜNCELLENDİ (Daha estetik ve dinamik) */
+  
   .obstacle-row { 
     position: absolute;
-    bottom: -30px; /* obstacleHeight'a göre ayarlanacak */
+    bottom: -30px; 
     left: 0;
     width: 100%;
-    /* height: 30px; */ /* Yükseklik JS ile atanacak, burada sabit kalmasına gerek yok */
     display: flex;
     align-items: center;
     z-index: 40; 
   }
   .obstacle-segment { 
-    /* Varsayılan stil - JS ile tema rengi atanacak */
     background: radial-gradient(circle at 50% 50%, #f7f7f7 0%, #aaa 100%); 
     height: 100%;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-    border-radius: 5px; /* Yumuşak köşe */
+    border-radius: 5px; 
   }
   .obstacle-gap { 
     background-color: transparent; 
@@ -170,17 +168,24 @@
     <div id="player"></div>
 </div>
 
+<audio id="scoreSound" src="score_sound.mp3" preload="auto"></audio>
+<audio id="collisionSound" src="collision_sound.mp3" preload="auto"></audio>
+
 <script>
   const body = document.body;
   const gameContainer = document.getElementById('gameContainer');
   const player = document.getElementById('player');
   const leaderboardList = document.getElementById('leaderboardList'); 
   
+  // V33: Ses elementleri
+  const scoreSound = document.getElementById('scoreSound');
+  const collisionSound = document.getElementById('collisionSound');
+  
   // --- Sabitler ---
   const playerSize = 40;
   const initialThrustSpeed = 8; 
   const maxVelocity = 15; 
-  const OBSTACLE_HEIGHT = 30; // V32: ENGEL YÜKSEKLİĞİ 50'DEN 30'A DÜŞÜRÜLDÜ
+  const OBSTACLE_HEIGHT = 30; 
   const minGapWidth = 80; 
   const maxGapWidth = 150; 
   const initialObstacleMoveSpeed = 2; 
@@ -195,17 +200,16 @@
       return `url('${BASE_URL}${index}-donusturuldugu-kaynak-png${IMAGE_EXTENSION}?v=${cacheBuster}')`;
   }
   
-  // V32: Engeller için tema renkleri eklendi.
   const themes = [
-    { name: "Level 1", bgColor: "#34495e", bgImage: getImageUrl(0), obstacleColor: "#5D6D7E" }, // Gri
-    { name: "Level 2", bgColor: "#7f8c8d", bgImage: getImageUrl(1), obstacleColor: "#E74C3C" }, // Kırmızı
-    { name: "Level 3", bgColor: "#e67e22", bgImage: getImageUrl(2), obstacleColor: "#F1C40F" }, // Sarı
-    { name: "Level 4", bgColor: "#2980b9", bgImage: getImageUrl(3), obstacleColor: "#3498DB" }, // Açık Mavi
-    { name: "Level 5", bgColor: "#c0392b", bgImage: getImageUrl(4), obstacleColor: "#9B59B6" }, // Mor
-    { name: "Level 6", bgColor: "#e9c46a", bgImage: getImageUrl(5), obstacleColor: "#1ABC9C" }, // Turkuaz
-    { name: "Level 7", bgColor: "#f39c12", bgImage: getImageUrl(6), obstacleColor: "#D35400" }, // Koyu Turuncu
-    { name: "Level 8", bgColor: "#bdc3c7", bgImage: getImageUrl(7), obstacleColor: "#2C3E50" }, // Koyu Gri
-    { name: "Level 9", bgColor: "#3498db", bgImage: getImageUrl(8), obstacleColor: "#ECF0F1" }  // Beyaz
+    { name: "Level 1", bgColor: "#34495e", bgImage: getImageUrl(0), obstacleColor: "#5D6D7E" }, 
+    { name: "Level 2", bgColor: "#7f8c8d", bgImage: getImageUrl(1), obstacleColor: "#E74C3C" }, 
+    { name: "Level 3", bgColor: "#e67e22", bgImage: getImageUrl(2), obstacleColor: "#F1C40F" }, 
+    { name: "Level 4", bgColor: "#2980b9", bgImage: getImageUrl(3), obstacleColor: "#3498DB" }, 
+    { name: "Level 5", bgColor: "#c0392b", bgImage: getImageUrl(4), obstacleColor: "#9B59B6" }, 
+    { name: "Level 6", bgColor: "#e9c46a", bgImage: getImageUrl(5), obstacleColor: "#1ABC9C" }, 
+    { name: "Level 7", bgColor: "#f39c12", bgImage: getImageUrl(6), obstacleColor: "#D35400" }, 
+    { name: "Level 8", bgColor: "#bdc3c7", bgImage: getImageUrl(7), obstacleColor: "#2C3E50" }, 
+    { name: "Level 9", bgColor: "#3498db", bgImage: getImageUrl(8), obstacleColor: "#ECF0F1" }  
   ];
 
   let currentThrustSpeed = initialThrustSpeed; 
@@ -225,7 +229,23 @@
   let lastObstacleSpawnTime = 0;
   let obstacles = []; 
   let currentLevel = 0; 
-  let currentObstacleColor = themes[0].obstacleColor; // V32: Başlangıç rengi
+  let currentObstacleColor = themes[0].obstacleColor; 
+
+  // V33: Ses çalma fonksiyonları
+  function playScoreSound() {
+    if (scoreSound) {
+        scoreSound.currentTime = 0; // Sesin baştan başlamasını sağlar
+        scoreSound.play().catch(e => console.error("Skor sesi çalınamadı:", e));
+    }
+  }
+
+  function playCollisionSound() {
+    if (collisionSound) {
+        collisionSound.currentTime = 0; 
+        collisionSound.play().catch(e => console.error("Çarpışma sesi çalınamadı:", e));
+    }
+  }
+
 
   function getHighScores() {
     const scores = localStorage.getItem(LEADERBOARD_KEY);
@@ -274,9 +294,7 @@
           body.style.backgroundColor = theme.bgColor;
       }
       
-      // V32: Güncel engel rengini ayarla
       currentObstacleColor = theme.obstacleColor; 
-      // Engellerin rengini anında değiştirmek için mevcut engelleri güncelle (gerekli değil ama görsel bütünlük için iyi)
       document.querySelectorAll('.obstacle-segment').forEach(segment => {
           segment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
       });
@@ -381,9 +399,11 @@
     if (isGameOver) return;
     isGameOver = true;
     
+    playCollisionSound(); // V33: Çarpışma sesi çalındı
+    
     clearInterval(timerInterval);
     cancelAnimationFrame(animationFrameId);
-
+    // ... (Kullanıcı adı isteme ve skor kaydetme kısmı)
     let username = prompt("Oyun Bitti! Lütfen bir kullanıcı adı girin:", "Anonim");
     if (username === null || username.trim() === "") {
         username = "Anonim";
@@ -414,13 +434,12 @@
     const obstacleRowDiv = document.createElement('div');
     obstacleRowDiv.classList.add('obstacle-row');
     obstacleRowDiv.style.bottom = `${-OBSTACLE_HEIGHT}px`; 
-    obstacleRowDiv.style.height = `${OBSTACLE_HEIGHT}px`; // Yüksekliği burada atıyoruz
+    obstacleRowDiv.style.height = `${OBSTACLE_HEIGHT}px`; 
 
     if (gapStartX > 0) {
       const leftSegment = document.createElement('div');
       leftSegment.classList.add('obstacle-segment');
       leftSegment.style.width = `${gapStartX}px`;
-      // V32: Yeni engelin rengini tema rengi yap
       leftSegment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
       obstacleRowDiv.appendChild(leftSegment);
     }
@@ -435,7 +454,6 @@
       const rightSegment = document.createElement('div');
       rightSegment.classList.add('obstacle-segment');
       rightSegment.style.width = `${rightSegmentWidth}px`;
-      // V32: Yeni engelin rengini tema rengi yap
       rightSegment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
       obstacleRowDiv.appendChild(rightSegment);
     }
@@ -444,7 +462,7 @@
 
     obstacles.push({
       element: obstacleRowDiv,
-      bottomY: -OBSTACLE_HEIGHT, // Yükseklik güncellendi
+      bottomY: -OBSTACLE_HEIGHT, 
       gapStartX: gapStartX,
       gapEndX: gapStartX + gapWidth,
       passed: false
@@ -524,7 +542,6 @@
       obs.bottomY += currentObstacleMoveSpeed; 
       obs.element.style.bottom = `${obs.bottomY}px`;
 
-      // Çarpışma ve skor kontrolünde OBSTACLE_HEIGHT kullanıldı
       const obstacleTopY = window.innerHeight - obs.bottomY - OBSTACLE_HEIGHT;
       const obstacleBottomY = window.innerHeight - obs.bottomY; 
 
@@ -545,6 +562,7 @@
 
       if (obs.bottomY > window.innerHeight && !obs.passed) {
         score++;
+        playScoreSound(); // V33: Skor sesi çalındı
         document.getElementById('scoreboard').textContent = `${themes[currentLevel % themes.length].name} | Skor: ${score}`;
         obs.passed = true;
       }
@@ -561,7 +579,6 @@
   // --- Olay Dinleyicileri ---
   document.addEventListener('DOMContentLoaded', () => {
       loadStartScreenImage();
-
       resetGame(); 
 
       const startButton = document.getElementById('startButton');
@@ -621,15 +638,4 @@
       document.addEventListener('keyup', (e) => {
         if (!isGameOver) {
             if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = false;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = false;
-            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = false;
-            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = false;
-
-            keys[e.code] = false;
-        }
-      });
-  });
-</script>
-
-</body>
-</html>
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown
