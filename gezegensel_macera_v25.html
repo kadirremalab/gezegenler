@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V30 - Alev Topu Oyuncu)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V31 - Başlatma Hatası Çözüldü)</title>
 <style>
   /* STİL KODLARI (Aynı Kaldı) */
   body {
@@ -34,16 +34,16 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    color: transparent; /* Yazı görünmez yapıldı */
+    color: transparent; 
     font-weight: bold;
     font-size: 10px;
     z-index: 50; 
-    transition: all 0.1s ease; /* Daha hızlı tepki için */
+    transition: all 0.1s ease; 
     /* Alev topu için varsayılan stil */
     background: radial-gradient(circle at 50% 50%, #ffcc00 0%, #ff6600 50%, #cc0000 100%);
     border-radius: 50%;
     box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    animation: flamePulse 1.5s infinite alternate; /* Alev topu animasyonu */
+    animation: flamePulse 1.5s infinite alternate; 
   }
 
   /* Alev Topu Animasyonu */
@@ -167,7 +167,8 @@
     <div id="scoreboard" class="info-box hidden">Skor: <span id="scoreValue">0</span></div>
     <div id="timer" class="info-box hidden">Süre: <span id="timeValue">00:00</span></div>
     
-    <div id="player"></div> </div>
+    <div id="player"></div>
+</div>
 
 <script>
   const body = document.body;
@@ -201,4 +202,420 @@
     { name: "Level 4", bgColor: "#2980b9", bgImage: getImageUrl(3), playerColor: "#1abc9c", playerStyle: "3px solid white" }, 
     { name: "Level 5", bgColor: "#c0392b", bgImage: getImageUrl(4), playerColor: "#e74c3c", playerStyle: "10%" }, 
     { name: "Level 6", bgColor: "#e9c46a", bgImage: getImageUrl(5), playerColor: "#f39c12", playerStyle: "0%" }, 
-    { name
+    { name: "Level 7", bgColor: "#f39c12", bgImage: getImageUrl(6), playerColor: "#e74c3c", playerStyle: "50%" }, 
+    { name: "Level 8", bgColor: "#bdc3c7", bgImage: getImageUrl(7), playerColor: "#3498db", playerStyle: "15%" }, 
+    { name: "Level 9", bgColor: "#3498db", bgImage: getImageUrl(8), playerColor: "#2980b9", playerStyle: "50%" } 
+  ];
+
+  let currentThrustSpeed = initialThrustSpeed; 
+  let currentObstacleMoveSpeed = initialObstacleMoveSpeed;
+  let obstacleSpawnInterval = 1500; 
+  let playerPosX; 
+  let playerPosY; 
+  let velocityX = 0; 
+  let velocityY = 0; 
+  let score = 0;
+  let isGameOver = true; 
+  let gameInteractionStarted = false; 
+  let keys = {}; 
+  let startTime = 0;
+  let timerInterval;
+  let animationFrameId;
+  let lastObstacleSpawnTime = 0;
+  let obstacles = []; 
+  let currentLevel = 0; 
+
+  function getHighScores() {
+    const scores = localStorage.getItem(LEADERBOARD_KEY);
+    return scores ? JSON.parse(scores) : [];
+  }
+  function saveScore(username, score) {
+    let scores = getHighScores();
+    const newScore = { username, score, date: new Date().toLocaleString() };
+    scores.push(newScore);
+    scores.sort((a, b) => b.score - a.score);
+    scores = scores.slice(0, 10); 
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(scores));
+  }
+  function showLeaderboard(latestUsername) {
+    const scores = getHighScores();
+    leaderboardList.innerHTML = ''; 
+    if (scores.length === 0) {
+        leaderboardList.innerHTML = '<li>Henüz skor yok! İlk siz olun.</li>';
+        return;
+    }
+    scores.forEach((s, index) => {
+        const listItem = document.createElement('li');
+        const isLatest = s.username === latestUsername && s.score === score;
+        listItem.innerHTML = `
+            <span>${index + 1}. <strong>${s.username}</strong></span>
+            <span>${s.score} <span style="font-size: 0.8em; color: #aaa;">(${s.date.split(',')[0]})</span></span>
+        `;
+        if (isLatest) {
+            listItem.style.color = '#f1c40f'; 
+        }
+        leaderboardList.appendChild(listItem);
+    });
+  }
+
+  function applyTheme(level) {
+      const themeIndex = level % themes.length; 
+      const theme = themes[themeIndex];
+      
+      if (theme.bgImage && theme.bgImage.includes('url')) {
+          body.style.backgroundImage = theme.bgImage;
+          body.style.backgroundColor = theme.bgColor; 
+          body.style.backgroundSize = 'cover';
+          body.style.backgroundPosition = 'center';
+      } else {
+          body.style.backgroundImage = 'none';
+          body.style.backgroundColor = theme.bgColor;
+      }
+      
+      document.getElementById('scoreboard').textContent = `${themes[themeIndex].name} | Skor: ${score}`;
+  }
+  
+  function loadStartScreenImage() {
+    applyTheme(0);
+  }
+
+  function updateDifficultyAndTheme() {
+    const newLevel = score; 
+    
+    const difficultyBase = Math.floor(score / 10);
+    currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
+    currentThrustSpeed = initialThrustSpeed + difficultyBase * 0.1;
+
+    let newInterval = 1500 - difficultyBase * 100; 
+    obstacleSpawnInterval = Math.max(newInterval, 600); 
+
+    if (newLevel !== currentLevel) {
+        currentLevel = newLevel;
+        applyTheme(currentLevel);
+    }
+  }
+
+  function startTiming() {
+    if (isGameOver || gameInteractionStarted) return;
+    
+    gameInteractionStarted = true;
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+    lastObstacleSpawnTime = Date.now(); 
+  }
+  function updateTimer() {
+    if (isGameOver) return;
+    updateDifficultyAndTheme(); 
+    
+    const elapsedTime = Date.now() - startTime;
+    const totalSeconds = Math.floor(elapsedTime / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    document.getElementById('timeValue').textContent = formattedTime;
+  }
+
+  function resetGame() {
+    score = 0;
+    currentLevel = 0;
+    currentThrustSpeed = initialThrustSpeed;
+    currentObstacleMoveSpeed = initialObstacleMoveSpeed;
+    obstacleSpawnInterval = 1500;
+    
+    keys = {};
+    velocityX = 0; 
+    velocityY = 0; 
+
+    document.getElementById('scoreboard').textContent = `${themes[0].name} | Skor: 0`; 
+    document.getElementById('timeValue').textContent = '00:00';
+
+    applyTheme(0); 
+
+    playerPosX = window.innerWidth / 2 - (playerSize / 2);
+    playerPosY = window.innerHeight / 2 - (playerSize / 2);
+    
+    player.style.left = `${playerPosX}px`;
+    player.style.top = `${playerPosY}px`;
+
+    obstacles.forEach(obs => obs.element.remove());
+    obstacles = [];
+    
+    isGameOver = true; 
+    gameInteractionStarted = false; 
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null; 
+    }
+    clearInterval(timerInterval);
+  }
+
+  function startGame() {
+    resetGame(); 
+    
+    isGameOver = false;
+    
+    const startScreen = document.getElementById('startScreen');
+    const endScreen = document.getElementById('endScreen');
+    
+    if (startScreen) startScreen.classList.add('hidden');
+    if (endScreen) endScreen.classList.add('hidden');
+    
+    document.getElementById('scoreboard').classList.remove('hidden');
+    document.getElementById('timer').classList.remove('hidden');
+
+    lastObstacleSpawnTime = Date.now(); 
+    animationFrameId = requestAnimationFrame(update);
+  }
+
+  function gameOver() {
+    if (isGameOver) return;
+    isGameOver = true;
+    
+    clearInterval(timerInterval);
+    cancelAnimationFrame(animationFrameId);
+
+    let username = prompt("Oyun Bitti! Lütfen bir kullanıcı adı girin:", "Anonim");
+    if (username === null || username.trim() === "") {
+        username = "Anonim";
+    }
+    username = username.substring(0, 15); 
+
+    saveScore(username, score);
+
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalTime').textContent = document.getElementById('timeValue').textContent;
+    
+    showLeaderboard(username); 
+
+    document.getElementById('endScreen').classList.remove('hidden');
+    player.style.backgroundColor = '#e74c3c'; 
+    
+    document.getElementById('scoreboard').classList.add('hidden');
+    document.getElementById('timer').classList.add('hidden');
+  }
+  
+  function createObstacle() {
+    const gameWidth = window.innerWidth;
+    const gapWidth = Math.floor(Math.random() * (maxGapWidth - minGapWidth + 1)) + minGapWidth;
+    
+    const maxGapX = gameWidth - gapWidth;
+    const gapStartX = Math.floor(Math.random() * maxGapX); 
+
+    const obstacleRowDiv = document.createElement('div');
+    obstacleRowDiv.classList.add('obstacle-row');
+    obstacleRowDiv.style.bottom = `${-obstacleHeight}px`; 
+
+    if (gapStartX > 0) {
+      const leftSegment = document.createElement('div');
+      leftSegment.classList.add('obstacle-segment');
+      leftSegment.style.width = `${gapStartX}px`;
+      obstacleRowDiv.appendChild(leftSegment);
+    }
+
+    const gapDiv = document.createElement('div');
+    gapDiv.classList.add('obstacle-gap');
+    gapDiv.style.width = `${gapWidth}px`;
+    obstacleRowDiv.appendChild(gapDiv);
+
+    const rightSegmentWidth = gameWidth - gapStartX - gapWidth;
+    if (rightSegmentWidth > 0) {
+      const rightSegment = document.createElement('div');
+      rightSegment.classList.add('obstacle-segment');
+      rightSegment.style.width = `${rightSegmentWidth}px`;
+      obstacleRowDiv.appendChild(rightSegment);
+    }
+
+    gameContainer.appendChild(obstacleRowDiv);
+
+    obstacles.push({
+      element: obstacleRowDiv,
+      bottomY: -obstacleHeight, 
+      gapStartX: gapStartX,
+      gapEndX: gapStartX + gapWidth,
+      passed: false
+    });
+  }
+
+  function update() {
+    if (isGameOver) return;
+
+    let isMovingCommand = false;
+    
+    if (keys['ArrowLeft'] || keys['KeyA']) {
+        velocityX = -currentThrustSpeed; 
+        isMovingCommand = true;
+    } else if (keys['ArrowRight'] || keys['KeyD']) {
+        velocityX = currentThrustSpeed; 
+        isMovingCommand = true;
+    } else {
+        velocityX = 0; 
+    }
+
+    if (keys['ArrowUp'] || keys['KeyW']) {
+        velocityY = -currentThrustSpeed; 
+        isMovingCommand = true;
+    } else if (keys['ArrowDown'] || keys['KeyS']) {
+        velocityY = currentThrustSpeed; 
+        isMovingCommand = true;
+    } else {
+        velocityY = 0; 
+    }
+
+    if (Math.abs(velocityX) > maxVelocity) {
+        velocityX = Math.sign(velocityX) * maxVelocity;
+    }
+    if (Math.abs(velocityY) > maxVelocity) {
+        velocityY = Math.sign(velocityY) * maxVelocity;
+    }
+
+    playerPosX += velocityX;
+    playerPosY += velocityY; 
+
+    if (isMovingCommand) {
+        startTiming();
+    }
+    
+    // Sınır Kontrolleri
+    if (playerPosX < 0) {
+        playerPosX = 0;
+        velocityX = 0; 
+    }
+    if (playerPosX > window.innerWidth - playerSize) {
+        playerPosX = window.innerWidth - playerSize;
+        velocityX = 0; 
+    }
+
+    if (playerPosY < 0) {
+        playerPosY = 0;
+        velocityY = 0; 
+    }
+    // V31 DÜZELTMESİ: Topu ekranın altından çıktığında yukarı ışınlamak yerine, kenara yapıştır.
+    if (playerPosY > window.innerHeight - playerSize) {
+        playerPosY = window.innerHeight - playerSize;
+        velocityY = 0; 
+    }
+
+    player.style.left = `${playerPosX}px`;
+    player.style.top = `${playerPosY}px`; 
+
+    // Engel oluşturma
+    if (gameInteractionStarted && Date.now() - lastObstacleSpawnTime > obstacleSpawnInterval) { 
+      createObstacle();
+      lastObstacleSpawnTime = Date.now();
+    }
+
+    // Engelleri hareket ettir ve çarpışma/skor kontrolü
+    for (let i = 0; i < obstacles.length; i++) {
+      let obs = obstacles[i];
+      obs.bottomY += currentObstacleMoveSpeed; 
+      obs.element.style.bottom = `${obs.bottomY}px`;
+
+      const obstacleTopY = window.innerHeight - obs.bottomY - obstacleHeight;
+      const obstacleBottomY = window.innerHeight - obs.bottomY; 
+
+      if (
+        playerPosX + playerSize > 0 && 
+        playerPosX < window.innerWidth && 
+        playerPosY + playerSize > obstacleTopY && 
+        playerPosY < obstacleBottomY 
+      ) {
+        const playerLeft = playerPosX;
+        const playerRight = playerPosX + playerSize;
+
+        if (playerRight < obs.gapStartX || playerLeft > obs.gapEndX) {
+            gameOver(); 
+            return;
+        }
+      }
+
+      if (obs.bottomY > window.innerHeight && !obs.passed) {
+        score++;
+        document.getElementById('scoreboard').textContent = `${themes[currentLevel % themes.length].name} | Skor: ${score}`;
+        obs.passed = true;
+      }
+
+      if (obs.bottomY > window.innerHeight) {
+        obs.element.remove();
+        obstacles.splice(i, 1);
+        i--; 
+      }
+    }
+    animationFrameId = requestAnimationFrame(update);
+  }
+
+  // --- Olay Dinleyicileri ---
+  document.addEventListener('DOMContentLoaded', () => {
+      loadStartScreenImage();
+
+      resetGame(); 
+
+      const startButton = document.getElementById('startButton');
+      const restartButton = document.getElementById('restartButton');
+
+      if (startButton) {
+          startButton.addEventListener('click', startGame);
+      } 
+
+      if (restartButton) {
+          restartButton.addEventListener('click', () => {
+              loadStartScreenImage();
+              startGame();
+          });
+      }
+      
+      // Mause Kontrolleri
+      gameContainer.addEventListener('mousedown', (e) => {
+        if (isGameOver) return; 
+        const clickX = e.clientX;
+        const centerX = window.innerWidth / 2;
+        if (clickX < centerX) { 
+            keys['ArrowLeft'] = true;
+            keys['ArrowRight'] = false;
+        } else { 
+            keys['ArrowRight'] = true;
+            keys['ArrowLeft'] = false;
+        }
+        startTiming(); 
+      });
+
+      gameContainer.addEventListener('mouseup', () => {
+        if (isGameOver) return;
+        keys['ArrowLeft'] = false;
+        keys['ArrowRight'] = false;
+      });
+
+      // Klavye Kontrolleri
+      document.addEventListener('keydown', (e) => {
+        if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) { 
+            startGame();
+            e.preventDefault();
+        }
+        if (!isGameOver) {
+            if (MOVEMENT_KEYS.includes(e.code)) {
+                 startTiming(); 
+            }
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = true;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = true;
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = true;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = true;
+
+            keys[e.code] = true;
+        }
+      });
+
+      document.addEventListener('keyup', (e) => {
+        if (!isGameOver) {
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = false;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = false;
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = false;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = false;
+
+            keys[e.code] = false;
+        }
+      });
+  });
+</script>
+
+</body>
+</html>
