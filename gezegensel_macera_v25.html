@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V47 - Nihai Düzeltme)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V49 - Güvenli Versiyon)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
@@ -11,7 +11,7 @@
     background-color: #34495e; 
     font-family: Arial, sans-serif;
     margin: 0;
-    transition: background-color 1s ease, background-image 1s ease; 
+    transition: background-color 1s ease; /* Sadece renk geçişi */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -304,13 +304,12 @@
 </div>
 
 <script>
-// V47: HTML'den çağrılan başlatma fonksiyonu (Global alana alındı)
+// V49 DÜZELTME: Bu fonksiyon, HTML'deki "startGame is not defined" hatasını çözmek için GLOBAL kapsamda olmalıdır.
 function startGame() {
-    // Bu kısım, tüm oyun mantığının yüklendiğini kontrol eder
+    // Tüm oyun mantığının yüklenip yüklenmediğini kontrol ederek başlatır.
     if (typeof window.initGameLogic === 'function') {
         window.initGameLogic();
     } else {
-        // Normalde burası çalışmaz, ancak yükleme sorunu olursa uyarı verir.
         console.error("Hata: Oyun mantığı (initGameLogic) henüz yüklenmedi.");
     }
 }
@@ -318,8 +317,7 @@ function startGame() {
 
 window.onload = function() {
   
-  // V47 DÜZELTME: Ses değişkenlerini sadece boş fonksiyonlar olarak bırakıyoruz.
-  // Donma hatası buradan kaynaklanıyordu. Ses eklemek isterseniz burayı değiştirmelisiniz.
+  // V49: Ses hatasını önlemek için boş fonksiyonlar.
   const scoreSound = { play: () => {} };
   const collisionSound = { play: () => {} };
   
@@ -338,4 +336,340 @@ window.onload = function() {
   
   
   // --- Sabitler ---
-  const playerSize
+  const playerSize = 40;
+  const initialThrustSpeed = 8; 
+  const maxVelocity = 15; 
+  const OBSTACLE_HEIGHT = 30; 
+  const minGapWidth = 80; 
+  const maxGapWidth = 150; 
+  const initialObstacleMoveSpeed = 2; 
+  
+  const POWERUP_SIZE = 25; 
+  const POWERUP_DURATION = 5000; 
+  const POWERUP_SPAWN_INTERVAL = 15000; 
+
+  const HORIZONTAL_OSCILLATION_SPEED = 1; 
+  const MAX_OSCILLATION_RANGE = 200; 
+
+  const LEADERBOARD_KEY = 'fallingGameHighScores'; 
+  const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
+  
+  // V49: Harici resim kullanmıyoruz
+  function getImageUrl(index) {
+      return ''; // Resim yükleme hatalarını önlemek için boş dize döndürülür
+  }
+  
+  const themes = [
+    { name: "NEBULA 1", bgColor: "#34495e", obstacleColor: "#5D6D7E" }, 
+    { name: "MARS 2", bgColor: "#7f8c8d", obstacleColor: "#E74C3C" }, 
+    { name: "CUPITER 3", "bgColor": "#e67e22", obstacleColor: "#F1C40F" }, 
+    { name: "NEPTUNE 4", bgColor: "#2980b9", obstacleColor: "#3498DB" }, 
+    { name: "VULCAN 5", bgColor: "#c0392b", obstacleColor: "#9B59B6" }, 
+    { name: "TITAN 6", bgColor: "#e9c46a", obstacleColor: "#1ABC9C" }, 
+    { name: "SATURN 7", bgColor: "#f39c12", obstacleColor: "#D35400" }, 
+    { name: "GANYMEDE 8", bgColor: "#bdc3c7", obstacleColor: "#2C3E50" }, 
+    { name: "URANUS 9", bgColor: "#3498db", obstacleColor: "#ECF0F1" }  
+  ];
+
+  // --- Değişkenler ---
+  let currentThrustSpeed = initialThrustSpeed; 
+  let currentObstacleMoveSpeed = initialObstacleMoveSpeed;
+  let obstacleSpawnInterval = 1500; 
+  let playerPosX; 
+  let playerPosY; 
+  let velocityX = 0; 
+  let velocityY = 0; 
+  let score = 0;
+  let isGameOver = true; 
+  let isPaused = false; 
+  let gameInteractionStarted = false; 
+  let keys = {}; 
+  let startTime = 0;
+  let timerInterval;
+  let animationFrameId = null; 
+  let lastObstacleSpawnTime = 0;
+  let lastPowerupSpawnTime = 0; 
+  let obstacles = []; 
+  let currentLevel = 0; 
+  let currentObstacleColor = themes[0].obstacleColor; 
+  let isPowerupActive = false; 
+  let powerupPos = { x: -100, y: -100 }; 
+  let latestUsername = "Anonim"; 
+
+  // --- Yardımcı Fonksiyonlar ---
+
+  function playScoreSound() { scoreSound.play(); }
+  function playCollisionSound() { collisionSound.play(); }
+  function playPowerupSound() { /* Ses kodları burada olsaydı çalışırdı */ }
+
+  function getHighScores() {
+    const scores = localStorage.getItem(LEADERBOARD_KEY);
+    return scores ? JSON.parse(scores) : [];
+  }
+  function saveScore(username, score) {
+    let scores = getHighScores();
+    const newScore = { username, score, date: new Date().toLocaleString() };
+    scores.push(newScore);
+    scores.sort((a, b) => b.score - a.score);
+    scores = scores.slice(0, 10); 
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(scores));
+  }
+  function showLeaderboard(latestUsername) {
+    const scores = getHighScores();
+    leaderboardList.innerHTML = ''; 
+    if (scores.length === 0) {
+        leaderboardList.innerHTML = '<li>Henüz skor yok! İlk siz olun.</li>';
+        return;
+    }
+    scores.forEach((s, index) => {
+        const listItem = document.createElement('li');
+        const isLatest = s.username === latestUsername && s.score === score;
+        listItem.innerHTML = `
+            <span>${index + 1}. <strong>${s.username}</strong></span>
+            <span>${s.score} <span style="font-size: 0.8em; color: #aaa;">(${s.date.split(',')[0]})</span></span>
+        `;
+        if (isLatest) {
+            listItem.style.color = '#f1c40f'; 
+        }
+        leaderboardList.appendChild(listItem);
+    });
+  }
+
+  function applyTheme(level) {
+      const themeIndex = level % themes.length; 
+      const theme = themes[themeIndex];
+      
+      // V49: Resimler engellendiği için sadece düz renk kullan
+      body.style.backgroundImage = 'none';
+      body.style.backgroundColor = theme.bgColor;
+
+      currentObstacleColor = theme.obstacleColor; 
+      document.querySelectorAll('.obstacle-segment').forEach(segment => {
+          segment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
+      });
+
+      document.getElementById('scoreboard').textContent = `${themes[themeIndex].name} | Skor: ${score}`;
+  }
+  
+  function loadStartScreenImage() {
+    applyTheme(0);
+  }
+
+  function updateDifficultyAndTheme() {
+    const newLevel = Math.floor(score / 20); 
+    
+    if (!isPowerupActive) { 
+        const difficultyBase = Math.floor(score / 10);
+        currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
+        currentThrustSpeed = initialThrustSpeed + difficultyBase * 0.1;
+    }
+
+    let newInterval = 1500 - Math.floor(score / 10) * 100; 
+    obstacleSpawnInterval = Math.max(newInterval, 600); 
+
+    if (newLevel !== currentLevel) {
+        currentLevel = newLevel;
+        applyTheme(currentLevel);
+    }
+  }
+
+  function startTiming() {
+    if (isGameOver || gameInteractionStarted || isPaused) return;
+    
+    gameInteractionStarted = true;
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+    lastObstacleSpawnTime = Date.now(); 
+    lastPowerupSpawnTime = Date.now(); 
+  }
+  
+  function updateTimer() {
+    if (isGameOver || isPaused) return;
+    updateDifficultyAndTheme(); 
+    
+    const elapsedTime = Date.now() - startTime;
+    const totalSeconds = Math.floor(elapsedTime / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    document.getElementById('timeValue').textContent = formattedTime;
+  }
+  
+  function togglePause() {
+    if (isGameOver) return;
+
+    isPaused = !isPaused;
+    
+    if (isPaused) {
+        clearInterval(timerInterval);
+        if (animationFrameId !== null) cancelAnimationFrame(animationFrameId); 
+        pauseScreen.classList.remove('hidden');
+        body.classList.add('slow-motion-body'); 
+    } else {
+        startTime += Date.now() - (Date.now() - (Date.now() - startTime) % 1000); 
+        timerInterval = setInterval(updateTimer, 1000);
+        animationFrameId = requestAnimationFrame(update);
+        pauseScreen.classList.add('hidden');
+        body.classList.remove('slow-motion-body');
+    }
+  }
+
+  function resetGame() {
+    score = 0; currentLevel = 0; currentThrustSpeed = initialThrustSpeed;
+    currentObstacleMoveSpeed = initialObstacleMoveSpeed; obstacleSpawnInterval = 1500;
+    isPowerupActive = false; isPaused = false; body.classList.remove('slow-motion-body');
+    powerupElement.classList.add('hidden'); powerupPos = { x: -100, y: -100 };
+    keys = {}; velocityX = 0; velocityY = 0; 
+    document.getElementById('scoreboard').textContent = `${themes[0].name} | Skor: 0`; 
+    document.getElementById('timeValue').textContent = '00:00';
+    applyTheme(0); 
+    playerPosX = window.innerWidth / 2 - (playerSize / 2);
+    playerPosY = window.innerHeight / 2 - (playerSize / 2);
+    player.style.left = `${playerPosX}px`;
+    player.style.top = `${playerPosY}px`; player.style.backgroundColor = ''; 
+    obstacles.forEach(obs => obs.element.remove());
+    obstacles = [];
+    isGameOver = true; gameInteractionStarted = false; 
+    
+    if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null; 
+    }
+    clearInterval(timerInterval);
+  }
+
+  // V49: Oyunun başlatılması için gerekli mantık (startGame'den çağrılır)
+  window.initGameLogic = function() {
+    resetGame(); 
+    
+    latestUsername = usernameInput.value.trim() || "Anonim";
+    latestUsername = latestUsername.substring(0, 15); 
+    
+    isGameOver = false;
+    
+    startScreen.classList.add('hidden');
+    endScreen.classList.add('hidden');
+    pauseScreen.classList.add('hidden');
+    
+    document.getElementById('scoreboard').classList.remove('hidden');
+    document.getElementById('timer').classList.remove('hidden');
+
+    lastObstacleSpawnTime = Date.now(); 
+    lastPowerupSpawnTime = Date.now();
+    
+    if (animationFrameId !== null) {
+         cancelAnimationFrame(animationFrameId);
+    }
+    animationFrameId = requestAnimationFrame(update);
+  }
+
+  function gameOver() {
+    if (isGameOver) return;
+    isGameOver = true;
+    
+    playCollisionSound(); 
+    
+    isPowerupActive = false; body.classList.remove('slow-motion-body'); powerupElement.classList.add('hidden'); 
+    clearInterval(timerInterval);
+    if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+    
+    endUsernameInput.value = latestUsername;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalTime').textContent = document.getElementById('timeValue').textContent;
+    
+    endScreen.classList.remove('hidden');
+    player.style.backgroundColor = '#e74c3c'; 
+    
+    document.getElementById('scoreboard').classList.add('hidden');
+    document.getElementById('timer').classList.add('hidden');
+    
+    document.getElementById('scoreEntry').classList.remove('hidden');
+    confirmScoreBtn.classList.remove('hidden');
+    leaderboardList.innerHTML = '<li>Skorunuzu kaydetmek için adınızı onaylayın.</li>'; 
+  }
+  
+  function confirmAndShowLeaderboard() {
+      const finalUsername = endUsernameInput.value.trim() || "Anonim";
+      latestUsername = finalUsername.substring(0, 15); 
+      
+      saveScore(latestUsername, score);
+      showLeaderboard(latestUsername); 
+      
+      confirmScoreBtn.classList.add('hidden');
+  }
+  
+  function createObstacle() {
+    const gameWidth = window.innerWidth;
+    const gapWidth = Math.floor(Math.random() * (maxGapWidth - minGapWidth + 1)) + minGapWidth;
+    const maxGapX = gameWidth - gapWidth;
+    const gapStartX = Math.floor(Math.random() * maxGapX); 
+
+    const obstacleRowDiv = document.createElement('div');
+    obstacleRowDiv.classList.add('obstacle-row');
+    obstacleRowDiv.style.bottom = `${-OBSTACLE_HEIGHT}px`; 
+    obstacleRowDiv.style.height = `${OBSTACLE_HEIGHT}px`; 
+
+    if (gapStartX > 0) {
+      const leftSegment = document.createElement('div');
+      leftSegment.classList.add('obstacle-segment');
+      leftSegment.style.width = `${gapStartX}px`;
+      leftSegment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
+      obstacleRowDiv.appendChild(leftSegment);
+    }
+
+    const gapDiv = document.createElement('div');
+    gapDiv.classList.add('obstacle-gap');
+    gapDiv.style.width = `${gapWidth}px`;
+    obstacleRowDiv.appendChild(gapDiv);
+
+    const rightSegmentWidth = gameWidth - gapStartX - gapWidth;
+    if (rightSegmentWidth > 0) {
+      const rightSegment = document.createElement('div');
+      rightSegment.classList.add('obstacle-segment');
+      rightSegment.style.width = `${rightSegmentWidth}px`;
+      rightSegment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
+      obstacleRowDiv.appendChild(rightSegment);
+    }
+
+    gameContainer.appendChild(obstacleRowDiv);
+
+    const isOscillating = Math.random() < 0.3; 
+    let oscillationOffset = 0;
+    let oscillationDirection = 1; 
+
+    if (isOscillating) {
+        oscillationDirection = Math.random() < 0.5 ? 1 : -1; 
+    }
+
+    obstacles.push({
+      element: obstacleRowDiv,
+      bottomY: -OBSTACLE_HEIGHT, 
+      gapStartX: gapStartX,
+      gapEndX: gapStartX + gapWidth,
+      passed: false,
+      isOscillating: isOscillating,      
+      oscillationOffset: oscillationOffset, 
+      oscillationDirection: oscillationDirection 
+    });
+  }
+
+  function spawnPowerup() {
+      if (!isGameOver) {
+          powerupPos.x = Math.random() * (window.innerWidth - POWERUP_SIZE);
+          powerupPos.y = Math.random() * (window.innerHeight - OBSTACLE_HEIGHT - POWERUP_SIZE * 2) + OBSTACLE_HEIGHT;
+          
+          powerupElement.style.left = `${powerupPos.x}px`;
+          powerupElement.style.top = `${powerupPos.y}px`;
+          powerupElement.classList.remove('hidden');
+          lastPowerupSpawnTime = Date.now();
+      }
+  }
+
+  function activatePowerup() {
+      if (isPowerupActive) return;
+      playPowerupSound(); 
+      isPowerupActive = true;
+      
+      powerupElement.classList.add('hidden');
+      powerupPos = { x: -100
