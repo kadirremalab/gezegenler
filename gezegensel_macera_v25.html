@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V53 - Kesin Başlangıç)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V54 - Görselli Başlangıç)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
@@ -11,7 +11,7 @@
     background-color: #34495e; 
     font-family: Arial, sans-serif;
     margin: 0;
-    transition: background-color 1s ease;
+    transition: background-color 1s ease, background-image 1s ease; /* background-image eklendi */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -306,7 +306,7 @@
 <script>
 window.onload = function() {
   
-  // V53: Ses objelerini hata vermemeleri için boş fonksiyonlarla tanımla.
+  // Ses objeleri - Hata vermemeleri için boş fonksiyonlarla tanımlı
   const scoreSound = { play: () => {} };
   const collisionSound = { play: () => {} };
   
@@ -322,7 +322,7 @@ window.onload = function() {
   const usernameInput = document.getElementById('usernameInput'); 
   const endUsernameInput = document.getElementById('endUsernameInput'); 
   const confirmScoreBtn = document.getElementById('confirmScoreBtn'); 
-  const startButton = document.getElementById('startButton'); // Başlat butonunu yakala
+  const startButton = document.getElementById('startButton'); 
   
   
   // --- Sabitler ---
@@ -344,11 +344,23 @@ window.onload = function() {
   const LEADERBOARD_KEY = 'fallingGameHighScores'; 
   const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
   
+  // V54 GÜNCELLEMESİ: Resim URL'lerini geri getiriyoruz
   function getImageUrl(index) {
-      return ''; 
+      const urls = [
+        'https://picsum.photos/1920/1080?random=1', // Nebula
+        'https://picsum.photos/1920/1080?random=2', // Mars
+        'https://picsum.photos/1920/1080?random=3', // Jupiter
+        'https://picsum.photos/1920/1080?random=4', // Neptune
+        'https://picsum.photos/1920/1080?random=5', // Vulcan
+        'https://picsum.photos/1920/1080?random=6', // Titan
+        'https://picsum.photos/1920/1080?random=7', // Saturn
+        'https://picsum.photos/1920/1080?random=8', // Ganymede
+        'https://picsum.photos/1920/1080?random=9'  // Uranus
+      ];
+      return urls[index % urls.length];
   }
   
-  // Tema listesi (Sadece renkler)
+  // Tema listesi
   const themes = [
     { name: "NEBULA 1", bgColor: "#34495e", obstacleColor: "#5D6D7E" }, 
     { name: "MARS 2", bgColor: "#7f8c8d", obstacleColor: "#E74C3C" }, 
@@ -428,7 +440,8 @@ window.onload = function() {
       const themeIndex = level % themes.length; 
       const theme = themes[themeIndex];
       
-      body.style.backgroundImage = 'none';
+      // V54: Arka plan resmi eklendi
+      body.style.backgroundImage = `url('${getImageUrl(themeIndex)}')`;
       body.style.backgroundColor = theme.bgColor;
 
       currentObstacleColor = theme.obstacleColor; 
@@ -659,193 +672,4 @@ window.onload = function() {
       playPowerupSound(); 
       isPowerupActive = true;
       
-      powerupElement.classList.add('hidden');
-      powerupPos = { x: -100, y: -100 };
-
-      currentObstacleMoveSpeed /= 2;
-      body.classList.add('slow-motion-body'); 
-
-      setTimeout(deactivatePowerup, POWERUP_DURATION);
-  }
-
-  function deactivatePowerup() {
-      isPowerupActive = false;
-      
-      const difficultyBase = Math.floor(score / 10);
-      currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
-      body.classList.remove('slow-motion-body'); 
-  }
-  
-  // --- Ana Oyun Döngüsü ---
-
-  function update() {
-    if (isGameOver || isPaused) {
-      animationFrameId = null; 
-      return; 
-    }
-
-    let isMovingCommand = false;
-    
-    // Hareket Kontrolü
-    if (keys['ArrowLeft'] || keys['KeyA']) { velocityX = -currentThrustSpeed; isMovingCommand = true; } 
-    else if (keys['ArrowRight'] || keys['KeyD']) { velocityX = currentThrustSpeed; isMovingCommand = true; } 
-    else { velocityX = 0; }
-    if (keys['ArrowUp'] || keys['KeyW']) { velocityY = -currentThrustSpeed; isMovingCommand = true; } 
-    else if (keys['ArrowDown'] || keys['KeyS']) { velocityY = currentThrustSpeed; isMovingCommand = true; } 
-    else { velocityY = 0; }
-    if (Math.abs(velocityX) > maxVelocity) { velocityX = Math.sign(velocityX) * maxVelocity; }
-    if (Math.abs(velocityY) > maxVelocity) { velocityY = Math.sign(velocityY) * maxVelocity; }
-
-    playerPosX += velocityX; playerPosY += velocityY; 
-
-    if (isMovingCommand) { startTiming(); }
-    
-    // Sınır Kontrolleri
-    if (playerPosX < 0) { playerPosX = 0; velocityX = 0; }
-    if (playerPosX > window.innerWidth - playerSize) { playerPosX = window.innerWidth - playerSize; velocityX = 0; }
-    if (playerPosY < 0) { playerPosY = 0; velocityY = 0; }
-    if (playerPosY > window.innerHeight - playerSize) { playerPosY = window.innerHeight - playerSize; velocityY = 0; }
-
-    player.style.left = `${playerPosX}px`;
-    player.style.top = `${playerPosY}px`; 
-
-    // Güçlendirme Oluşturma ve Çarpışma
-    if (gameInteractionStarted && Date.now() - lastPowerupSpawnTime > POWERUP_SPAWN_INTERVAL && powerupElement.classList.contains('hidden')) { spawnPowerup(); }
-    
-    if (!powerupElement.classList.contains('hidden')) {
-        const pLeft = playerPosX; const pRight = playerPosX + playerSize;
-        const pTop = playerPosY; const pBottom = playerPosY + playerSize;
-        const puLeft = powerupPos.x; const puRight = powerupPos.x + POWERUP_SIZE;
-        const puTop = powerupPos.y; const puBottom = powerupPos.y + POWERUP_SIZE;
-
-        if (pRight > puLeft && pLeft < puRight && pBottom > puTop && pTop < puBottom) {
-            activatePowerup();
-        }
-    }
-
-    // Engel oluşturma
-    if (gameInteractionStarted && Date.now() - lastObstacleSpawnTime > obstacleSpawnInterval) { 
-      createObstacle();
-      lastObstacleSpawnTime = Date.now();
-    }
-
-    // Engelleri hareket ettir ve Çarpışma Kontrolü
-    for (let i = 0; i < obstacles.length; i++) {
-      let obs = obstacles[i];
-      obs.bottomY += currentObstacleMoveSpeed; 
-      obs.element.style.bottom = `${obs.bottomY}px`;
-      
-      // Yatay Sallanma Hareketi
-      if (obs.isOscillating) {
-          obs.oscillationOffset += obs.oscillationDirection * HORIZONTAL_OSCILLATION_SPEED;
-          
-          if (obs.oscillationOffset > MAX_OSCILLATION_RANGE || obs.oscillationOffset < -MAX_OSCILLATION_RANGE) {
-              obs.oscillationDirection *= -1; 
-          }
-          obs.element.style.transform = `translateX(${obs.oscillationOffset}px)`;
-      }
-
-      // Çarpışma Kontrolü:
-      const obstacleTopY = window.innerHeight - obs.bottomY - OBSTACLE_HEIGHT;
-      const obstacleBottomY = window.innerHeight - obs.bottomY; 
-
-      if (playerPosY + playerSize > obstacleTopY && playerPosY < obstacleBottomY) {
-        const obsGapStartX_Adjusted = obs.gapStartX + obs.oscillationOffset;
-        const obsGapEndX_Adjusted = obs.gapEndX + obs.oscillationOffset;
-        const playerCenter = playerPosX + (playerSize / 2); 
-        
-        if (playerCenter < obsGapStartX_Adjusted || playerCenter > obsGapEndX_Adjusted) {
-            const horizontalCollision = (playerPosX < obsGapStartX_Adjusted && playerPosX + playerSize > obsGapStartX_Adjusted) || 
-                                        (playerPosX < obsGapEndX_Adjusted && playerPosX + playerSize > obsGapEndX_Adjusted);       
-            
-            if (horizontalCollision) {
-                gameOver(); 
-                return;
-            }
-        }
-      }
-
-      if (obs.bottomY > window.innerHeight && !obs.passed) {
-        score++;
-        playScoreSound(); 
-        document.getElementById('scoreboard').textContent = `${themes[currentLevel % themes.length].name} | Skor: ${score}`;
-        obs.passed = true;
-      }
-
-      if (obs.bottomY > window.innerHeight) {
-        obs.element.remove();
-        obstacles.splice(i, 1);
-        i--; 
-      }
-    }
-    
-    animationFrameId = requestAnimationFrame(update); 
-  }
-
-  // --- Olay Dinleyicileri ---
-  
-  loadStartScreenImage();
-  resetGame(); 
-
-  const restartButton = document.getElementById('restartButton');
-  const resumeButton = document.getElementById('resumeButton'); 
-
-  // V53 ÇÖZÜMÜ: Start butonu tıklandığında initGameLogic'i çağırır.
-  if (startButton) {
-      startButton.addEventListener('click', () => {
-          window.initGameLogic(); 
-      });
-  }
-
-  if (restartButton) {
-      restartButton.addEventListener('click', () => {
-          loadStartScreenImage();
-          window.initGameLogic(); 
-      });
-  }
-  
-  if (resumeButton) {
-      resumeButton.addEventListener('click', togglePause);
-  }
-  
-  if (confirmScoreBtn) {
-      confirmScoreBtn.addEventListener('click', confirmAndShowLeaderboard);
-  }
-
-  document.addEventListener('keydown', (e) => {
-    if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) { 
-        window.initGameLogic(); 
-        e.preventDefault();
-        return;
-    }
-    if (!isGameOver) {
-        if (e.code === 'KeyP' || e.code === 'Escape' || e.code === 'Space') { 
-            togglePause();
-            e.preventDefault(); 
-            return;
-        }
-        if (isPaused) return;
-        if (MOVEMENT_KEYS.includes(e.code)) { startTiming(); }
-        if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = true;
-        if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = true;
-        if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = true;
-        if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = true;
-        keys[e.code] = true;
-    }
-  });
-
-  document.addEventListener('keyup', (e) => {
-    if (!isGameOver && !isPaused) {
-        if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = false;
-        if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = false;
-        if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = false;
-        if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = false;
-        keys[e.code] = false;
-    }
-  });
-
-}; // window.onload bloğunun sonu
-</script>
-
-</body>
-</html>
+      powerup
