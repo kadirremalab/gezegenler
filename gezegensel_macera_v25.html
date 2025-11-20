@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V48 - TAM STABİL)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V46 - Stabil)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
-    /* 1. ARKA PLAN VE GENEL STİLLER */
+    /* 1. ARKA PLAN VE GENEL STİLLER (BEYAZ EKRAN HATASINI ÖNLEMEK İÇİN GÜÇLENDİRİLDİ) */
     body {
         overflow: hidden;
-        background-color: #34495e; 
+        background-color: #34495e; /* Varsayılan Arkaplan Rengi */
         font-family: Arial, sans-serif;
         margin: 0;
-        /* Görsel geçişi için süre tanır */
-        transition: background-image 1s ease, filter 0.5s ease;
+        transition: background-color 1s ease, background-image 1s ease;
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -37,14 +36,13 @@
     .obstacle-row { position: absolute; bottom: -30px; left: 0; width: 100%; display: flex; align-items: center; z-index: 40; height: 30px; }
     .obstacle-segment { 
         height: 100%; 
-        background: radial-gradient(circle at 50% 50%, #f7f7f7 0%, #5D6D7E 100%); 
+        background: radial-gradient(circle at 50% 50%, #f7f7f7 0%, #5D6D7E 100%); /* Varsayılan Engel Rengi */
         box-shadow: 0 0 8px rgba(0, 0, 0, 0.5); border-radius: 5px; 
-        transition: background-color 0.5s ease; /* Tema değişiminde yumuşak geçiş */
     }
     .obstacle-gap { background-color: transparent; height: 100%; }
 
     /* 4. ARAYÜZ VE BUTON STİLLERİ */
-    .info-box { position: absolute; padding: 10px; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 5px; z-index: 100; font-family: 'Press Start 2P', cursive; font-size: 0.8em; }
+    .info-box { position: absolute; padding: 10px; background-color: rgba(0, 0, 0, 0.5); color: white; border-radius: 5px; z-index: 100; font-family: 'Press Start 2P', cursive; font-size: 0.8em; }
     #scoreboard { top: 10px; left: 10px; }
     #timer { top: 10px; right: 10px; }
     
@@ -104,33 +102,17 @@
 </div>
 
 <script>
-    // ----------------------------------------------------------------------
-    // V48 - GÖRSEL VE SES DOSYASI YOLLARI
-    // ----------------------------------------------------------------------
-
-    // BASE_URL = './' AYARI SAYESİNDE, DOSYALARIN HTML İLE AYNI KLASÖRDE OLMASI GEREKİR.
-    const BASE_URL = './'; 
+    // --- SES TANIMLARI (Hata vermemesi için boş fonksiyonlar) ---
+    const scoreSound = { play: () => {} };
+    const collisionSound = { play: () => {} };
     
-    // GÖRSEL DOSYALARININ UZANTISI (.jpeg, .png, vb.)
-    const IMAGE_EXTENSION = '.jpeg'; 
-    
-    // SES DOSYALARINI YÜKLE - Buradaki isimler kesinlikle doğru olmalı!
-    try {
-        var scoreSound = new Audio(BASE_URL + 'score_sound.mp3');
-        var collisionSound = new Audio(BASE_URL + 'collision_sound.mp3');
-        var powerupSound = new Audio(BASE_URL + 'powerup_sound.mp3');
-    } catch (e) {
-        console.error("Ses dosyaları yüklenemedi. Sanal ses nesneleri kullanılıyor.");
-        // Yükleme başarısız olursa, hatayı önlemek için sahte nesneler kullanırız.
-        var scoreSound = { play: () => {} };
-        var collisionSound = { play: () => {} };
-        var powerupSound = { play: () => {} };
+    function playScoreSound() {
+        scoreSound.play(); // V46: .catch() kaldırıldı.
     }
-    
-    function playScoreSound() { scoreSound.play(); }
-    function playCollisionSound() { collisionSound.play(); }
-    function playPowerupSound() { powerupSound.play(); }
 
+    function playCollisionSound() {
+        collisionSound.play(); // V46: .catch() kaldırıldı.
+    }
     // --- DOM ve Sabit Tanımlar ---
     const body = document.body;
     const gameContainer = document.getElementById('gameContainer');
@@ -162,17 +144,16 @@
     const LEADERBOARD_KEY = 'fallingGameHighScores'; 
     const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
     
-    // Tema verileri (renkler artık sadece engel için yedek olarak var, arkaplan resim kullanacak)
     const themes = [
-        { name: "NEBULA 1", obstacleColor: "#5D6D7E" }, 
-        { name: "MARS 2", obstacleColor: "#E74C3C" }, 
-        { name: "JUPITER 3", obstacleColor: "#F1C40F" }, 
-        { name: "NEPTUNE 4", obstacleColor: "#3498DB" }, 
-        { name: "VULCAN 5", obstacleColor: "#9B59B6" }, 
-        { name: "TITAN 6", obstacleColor: "#1ABC9C" }, 
-        { name: "SATURN 7", obstacleColor: "#D35400" }, 
-        { name: "GANYMEDE 8", obstacleColor: "#2C3E50" }, 
-        { name: "URANUS 9", obstacleColor: "#ECF0F1" }    
+        { name: "NEBULA 1", bgColor: "#34495e", obstacleColor: "#5D6D7E" }, 
+        { name: "MARS 2", bgColor: "#7f8c8d", obstacleColor: "#E74C3C" }, 
+        { name: "JUPITER 3", "bgColor": "#e67e22", obstacleColor: "#F1C40F" }, 
+        { name: "NEPTUNE 4", bgColor: "#2980b9", obstacleColor: "#3498DB" }, 
+        { name: "VULCAN 5", bgColor: "#c0392b", obstacleColor: "#9B59B6" }, 
+        { name: "TITAN 6", bgColor: "#e9c46a", obstacleColor: "#1ABC9C" }, 
+        { name: "SATURN 7", bgColor: "#f39c12", obstacleColor: "#D35400" }, 
+        { name: "GANYMEDE 8", bgColor: "#bdc3c7", obstacleColor: "#2C3E50" }, 
+        { name: "URANUS 9", bgColor: "#3498db", obstacleColor: "#ECF0F1" }    
     ];
 
     let currentThrustSpeed = initialThrustSpeed; 
@@ -199,7 +180,42 @@
     let powerupPos = { x: -100, y: -100 }; 
     let latestUsername = "Anonim"; 
     
-    // --- Oyun Kontrol Fonksiyonları ---
+    // --- Geri Kalan Tüm Fonksiyonlar --- (V45'teki fonksiyonlar hatasız olarak korunmuştur)
+
+    function playPowerupSound() {}
+    function spawnPowerup() {
+        if (!isGameOver) {
+            powerupPos.x = Math.random() * (window.innerWidth - POWERUP_SIZE);
+            powerupPos.y = Math.random() * (window.innerHeight - OBSTACLE_HEIGHT - POWERUP_SIZE * 2) + OBSTACLE_HEIGHT;
+            
+            powerupElement.style.left = `${powerupPos.x}px`;
+            powerupElement.style.top = `${powerupPos.y}px`;
+            powerupElement.classList.remove('hidden');
+            lastPowerupSpawnTime = Date.now();
+        }
+    }
+
+    function activatePowerup() {
+        if (isPowerupActive) return;
+        playPowerupSound(); 
+        isPowerupActive = true;
+        
+        powerupElement.classList.add('hidden');
+        powerupPos = { x: -100, y: -100 };
+
+        currentObstacleMoveSpeed /= 2;
+        body.classList.add('slow-motion-body'); 
+
+        setTimeout(deactivatePowerup, POWERUP_DURATION);
+    }
+
+    function deactivatePowerup() {
+        isPowerupActive = false;
+        
+        const difficultyBase = Math.floor(score / 10);
+        currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
+        body.classList.remove('slow-motion-body'); 
+    }
     
     function getHighScores() {
         const scores = localStorage.getItem(LEADERBOARD_KEY);
@@ -215,3 +231,398 @@
     }
     function showLeaderboard(latestUsername) {
         const scores = getHighScores();
+        leaderboardList.innerHTML = ''; 
+        if (scores.length === 0) {
+            leaderboardList.innerHTML = '<li>Henüz skor yok! İlk siz olun.</li>';
+            return;
+        }
+        scores.forEach((s, index) => {
+            const listItem = document.createElement('li');
+            // Skor listesinde en son oynanan skorun vurgulanması (Basitleştirildi)
+            const isLatest = s.username === latestUsername && s.score === score && index === 0;
+            listItem.innerHTML = `
+                <span>${index + 1}. <strong>${s.username}</strong></span>
+                <span>${s.score} <span style="font-size: 0.8em; color: #aaa;">(${s.date.split(',')[0]})</span></span>
+            `;
+            if (isLatest) {
+                listItem.style.color = '#f1c40f'; 
+            }
+            leaderboardList.appendChild(listItem);
+        });
+    }
+
+    function applyTheme(level) {
+        const themeIndex = level % themes.length; 
+        const theme = themes[themeIndex];
+        
+        body.style.backgroundImage = 'none';
+        body.style.backgroundColor = theme.bgColor;
+        
+        currentObstacleColor = theme.obstacleColor; 
+        document.querySelectorAll('.obstacle-segment').forEach(segment => {
+            segment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
+        });
+
+        document.getElementById('scoreboard').textContent = `${themes[themeIndex].name} | Skor: ${score}`;
+    }
+    
+    function updateDifficultyAndTheme() {
+        const newLevel = Math.floor(score / 20); 
+        
+        if (!isPowerupActive) { 
+            const difficultyBase = Math.floor(score / 10);
+            currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
+            currentThrustSpeed = initialThrustSpeed + difficultyBase * 0.1;
+        }
+
+        let newInterval = 1500 - Math.floor(score / 10) * 100; 
+        obstacleSpawnInterval = Math.max(newInterval, 600); 
+
+        if (newLevel !== currentLevel) {
+            currentLevel = newLevel;
+            applyTheme(currentLevel);
+        }
+    }
+
+    function startTiming() {
+        if (isGameOver || gameInteractionStarted || isPaused) return;
+        
+        gameInteractionStarted = true;
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 1000);
+        lastObstacleSpawnTime = Date.now(); 
+        lastPowerupSpawnTime = Date.now(); 
+    }
+    
+    function updateTimer() {
+        if (isGameOver || isPaused) return;
+        updateDifficultyAndTheme(); 
+        
+        const elapsedTime = Date.now() - startTime;
+        const totalSeconds = Math.floor(elapsedTime / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        
+        const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        document.getElementById('timeValue').textContent = formattedTime;
+    }
+    
+    function togglePause() {
+        if (isGameOver) return;
+
+        isPaused = !isPaused;
+        
+        if (isPaused) {
+            clearInterval(timerInterval);
+            cancelAnimationFrame(animationFrameId);
+            pauseScreen.classList.remove('hidden');
+            body.classList.add('slow-motion-body'); 
+        } else {
+            startTime += Date.now() - (Date.now() - (Date.now() - startTime) % 1000); 
+            timerInterval = setInterval(updateTimer, 1000);
+            animationFrameId = requestAnimationFrame(update);
+            pauseScreen.classList.add('hidden');
+            body.classList.remove('slow-motion-body');
+        }
+    }
+
+    function resetGame() {
+        score = 0;
+        currentLevel = 0;
+        
+        currentThrustSpeed = initialThrustSpeed;
+        currentObstacleMoveSpeed = initialObstacleMoveSpeed;
+        obstacleSpawnInterval = 1500;
+        isPowerupActive = false;
+        isPaused = false; 
+        body.classList.remove('slow-motion-body');
+        powerupElement.classList.add('hidden');
+        powerupPos = { x: -100, y: -100 };
+        
+        keys = {};
+        velocityX = 0; 
+        velocityY = 0; 
+
+        applyTheme(0); 
+        document.getElementById('scoreboard').textContent = `${themes[0].name} | Skor: 0`; 
+        document.getElementById('timeValue').textContent = '00:00';
+
+        playerPosX = window.innerWidth / 2 - (playerSize / 2);
+        playerPosY = window.innerHeight / 2 - (playerSize / 2);
+        
+        player.style.left = `${playerPosX}px`;
+        player.style.top = `${playerPosY}px`;
+        player.style.backgroundColor = ''; 
+
+        obstacles.forEach(obs => obs.element.remove());
+        obstacles = [];
+        
+        isGameOver = true; 
+        gameInteractionStarted = false; 
+        
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null; 
+        }
+        clearInterval(timerInterval);
+    }
+
+    function startGame() {
+        resetGame(); 
+        
+        latestUsername = usernameInput.value.trim() || "Anonim";
+        latestUsername = latestUsername.substring(0, 15); 
+        
+        isGameOver = false;
+        
+        startScreen.classList.add('hidden');
+        endScreen.classList.add('hidden');
+        pauseScreen.classList.add('hidden');
+        
+        document.getElementById('scoreboard').classList.remove('hidden');
+        document.getElementById('timer').classList.remove('hidden');
+
+        lastObstacleSpawnTime = Date.now(); 
+        lastPowerupSpawnTime = Date.now();
+        
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        animationFrameId = requestAnimationFrame(update);
+    }
+
+    function gameOver() {
+        if (isGameOver) return;
+        isGameOver = true;
+        
+        playCollisionSound(); 
+        
+        isPowerupActive = false;
+        body.classList.remove('slow-motion-body');
+        powerupElement.classList.add('hidden'); 
+        
+        clearInterval(timerInterval);
+        cancelAnimationFrame(animationFrameId);
+        
+        endUsernameInput.value = latestUsername;
+        document.getElementById('finalScore').textContent = score;
+        document.getElementById('finalTime').textContent = document.getElementById('timeValue').textContent;
+        
+        endScreen.classList.remove('hidden');
+        player.style.backgroundColor = '#e74c3c'; 
+        
+        document.getElementById('scoreboard').classList.add('hidden');
+        document.getElementById('timer').classList.add('hidden');
+        
+        document.getElementById('scoreEntry').classList.remove('hidden');
+        confirmScoreBtn.classList.remove('hidden');
+        showLeaderboard(latestUsername); // Skor tablosunu göstermek için çağır
+    }
+    
+    function confirmAndShowLeaderboard() {
+        const finalUsername = endUsernameInput.value.trim() || "Anonim";
+        latestUsername = finalUsername.substring(0, 15); 
+        
+        saveScore(latestUsername, score);
+        showLeaderboard(latestUsername); 
+        
+        confirmScoreBtn.classList.add('hidden');
+    }
+    
+    function createObstacle() {
+        const gameWidth = window.innerWidth;
+        const gapWidth = Math.floor(Math.random() * (maxGapWidth - minGapWidth + 1)) + minGapWidth;
+        
+        const maxGapX = gameWidth - gapWidth;
+        const gapStartX = Math.floor(Math.random() * maxGapX); 
+
+        const obstacleRowDiv = document.createElement('div');
+        obstacleRowDiv.classList.add('obstacle-row');
+        obstacleRowDiv.style.bottom = `${-OBSTACLE_HEIGHT}px`; 
+
+        if (gapStartX > 0) {
+            const leftSegment = document.createElement('div');
+            leftSegment.classList.add('obstacle-segment');
+            leftSegment.style.width = `${gapStartX}px`;
+            leftSegment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
+            obstacleRowDiv.appendChild(leftSegment);
+        }
+
+        const gapDiv = document.createElement('div');
+        gapDiv.classList.add('obstacle-gap');
+        gapDiv.style.width = `${gapWidth}px`;
+        obstacleRowDiv.appendChild(gapDiv);
+
+        const rightSegmentWidth = gameWidth - gapStartX - gapWidth;
+        if (rightSegmentWidth > 0) {
+            const rightSegment = document.createElement('div');
+            rightSegment.classList.add('obstacle-segment');
+            rightSegment.style.width = `${rightSegmentWidth}px`;
+            rightSegment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
+            obstacleRowDiv.appendChild(rightSegment);
+        }
+
+        gameContainer.appendChild(obstacleRowDiv);
+
+        const isOscillating = Math.random() < 0.3; 
+        let oscillationOffset = 0;
+        let oscillationDirection = 1; 
+
+        if (isOscillating) {
+            oscillationDirection = Math.random() < 0.5 ? 1 : -1; 
+        }
+
+        obstacles.push({
+            element: obstacleRowDiv,
+            bottomY: -OBSTACLE_HEIGHT, 
+            gapStartX: gapStartX,
+            gapEndX: gapStartX + gapWidth,
+            passed: false,
+            isOscillating: isOscillating,     
+            oscillationOffset: oscillationOffset, 
+            oscillationDirection: oscillationDirection 
+        });
+    }
+
+    // --- Ana Oyun Döngüsü ---
+    function update() {
+        if (isGameOver || isPaused) return;
+
+        let isMovingCommand = false;
+        
+        if (keys['ArrowLeft'] || keys['KeyA']) { velocityX = -currentThrustSpeed; isMovingCommand = true; } 
+        else if (keys['ArrowRight'] || keys['KeyD']) { velocityX = currentThrustSpeed; isMovingCommand = true; } 
+        else { velocityX = 0; }
+
+        if (keys['ArrowUp'] || keys['KeyW']) { velocityY = -currentThrustSpeed; isMovingCommand = true; } 
+        else if (keys['ArrowDown'] || keys['KeyS']) { velocityY = currentThrustSpeed; isMovingCommand = true; } 
+        else { velocityY = 0; }
+
+        if (Math.abs(velocityX) > maxVelocity) { velocityX = Math.sign(velocityX) * maxVelocity; }
+        if (Math.abs(velocityY) > maxVelocity) { velocityY = Math.sign(velocityY) * maxVelocity; }
+
+        playerPosX += velocityX;
+        playerPosY += velocityY; 
+
+        if (isMovingCommand) {
+            startTiming();
+        }
+        
+        playerPosX = Math.max(0, Math.min(playerPosX, window.innerWidth - playerSize));
+        playerPosY = Math.max(0, Math.min(playerPosY, window.innerHeight - playerSize));
+
+        player.style.left = `${playerPosX}px`;
+        player.style.top = `${playerPosY}px`; 
+
+        if (gameInteractionStarted && Date.now() - lastPowerupSpawnTime > POWERUP_SPAWN_INTERVAL && powerupElement.classList.contains('hidden')) {
+            spawnPowerup();
+        }
+
+        if (!powerupElement.classList.contains('hidden')) {
+            const puLeft = powerupPos.x;
+            const puTop = powerupPos.y;
+
+            if (
+                playerPosX < puLeft + POWERUP_SIZE && playerPosX + playerSize > puLeft &&
+                playerPosY < puTop + POWERUP_SIZE && playerPosY + playerSize > puTop
+            ) {
+                activatePowerup();
+            }
+        }
+
+        if (gameInteractionStarted && Date.now() - lastObstacleSpawnTime > obstacleSpawnInterval) { 
+            createObstacle();
+            lastObstacleSpawnTime = Date.now();
+        }
+
+        for (let i = 0; i < obstacles.length; i++) {
+            let obs = obstacles[i];
+            obs.bottomY += currentObstacleMoveSpeed; 
+            
+            if (obs.isOscillating) {
+                obs.oscillationOffset += obs.oscillationDirection * HORIZONTAL_OSCILLATION_SPEED;
+                
+                if (obs.oscillationOffset > MAX_OSCILLATION_RANGE || obs.oscillationOffset < -MAX_OSCILLATION_RANGE) {
+                    obs.oscillationDirection *= -1; 
+                }
+                obs.element.style.transform = `translateX(${obs.oscillationOffset}px)`;
+            }
+            obs.element.style.bottom = `${obs.bottomY}px`;
+
+            const obstacleTopY = window.innerHeight - obs.bottomY - OBSTACLE_HEIGHT;
+            const obstacleBottomY = window.innerHeight - obs.bottomY; 
+
+            if (
+                playerPosY + playerSize > obstacleTopY && 
+                playerPosY < obstacleBottomY             
+            ) {
+                const obsGapStartX_Adjusted = obs.gapStartX + obs.oscillationOffset;
+                const obsGapEndX_Adjusted = obs.gapEndX + obs.oscillationOffset;
+
+                if (playerPosX + playerSize > obsGapStartX_Adjusted && playerPosX < obsGapEndX_Adjusted) {
+                } else {
+                    gameOver(); 
+                    return;
+                }
+            }
+
+            if (obs.bottomY > window.innerHeight && !obs.passed) {
+                score++;
+                playScoreSound(); 
+                document.getElementById('scoreboard').textContent = `${themes[currentLevel % themes.length].name} | Skor: ${score}`;
+                obs.passed = true;
+            }
+
+            if (obs.bottomY > window.innerHeight) {
+                obs.element.remove();
+                obstacles.splice(i, 1);
+                i--; 
+            }
+        }
+        animationFrameId = requestAnimationFrame(update);
+    }
+
+    // --- Olay Dinleyicileri ---
+    document.addEventListener('DOMContentLoaded', () => {
+        resetGame(); 
+        
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const resumeButton = document.getElementById('resumeButton'); 
+
+        if (startButton) startButton.addEventListener('click', startGame);
+        if (restartButton) restartButton.addEventListener('click', startGame);
+        if (resumeButton) resumeButton.addEventListener('click', togglePause);
+        if (confirmScoreBtn) confirmScoreBtn.addEventListener('click', confirmAndShowLeaderboard);
+
+        document.addEventListener('keydown', (e) => {
+            if (isGameOver && (e.code === 'Space' || e.code === 'Enter') && startScreen.classList.contains('hidden')) { 
+                startGame();
+                e.preventDefault();
+                return;
+            }
+
+            if (!isGameOver) {
+                if (e.code === 'KeyP' || e.code === 'Escape' || e.code === 'Space') { 
+                    togglePause();
+                    e.preventDefault(); 
+                    return;
+                }
+
+                if (isPaused) return;
+
+                if (MOVEMENT_KEYS.includes(e.code)) {
+                    startTiming(); 
+                }
+                keys[e.code] = true;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+    });
+</script>
+
+</body>
+</html>
