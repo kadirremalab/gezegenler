@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V56 - Ekran Yönetimi Fix)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V53 - Kesin Başlangıç)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
@@ -11,12 +11,10 @@
     background-color: #34495e; 
     font-family: Arial, sans-serif;
     margin: 0;
-    transition: background-color 1s ease, background-image 1s ease;
+    transition: background-color 1s ease;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    /* V56: Başlangıçta tüm vücut görünür olsun */
-    opacity: 1; 
   }
   
   #startScreen h1, #endScreen h1, #pauseScreen h1, #scoreboard {
@@ -308,12 +306,14 @@
 <script>
 window.onload = function() {
   
-  // Ses objeleri (Hata vermemek için pasif)
+  // V53: Ses objelerini hata vermemeleri için boş fonksiyonlarla tanımla.
   const scoreSound = { play: () => {} };
   const collisionSound = { play: () => {} };
   
   // Element referansları
   const body = document.body;
+  const gameContainer = document.getElementById('gameContainer');
+  const player = document.getElementById('player');
   const leaderboardList = document.getElementById('leaderboardList'); 
   const powerupElement = document.getElementById('powerup'); 
   const startScreen = document.getElementById('startScreen');
@@ -322,11 +322,7 @@ window.onload = function() {
   const usernameInput = document.getElementById('usernameInput'); 
   const endUsernameInput = document.getElementById('endUsernameInput'); 
   const confirmScoreBtn = document.getElementById('confirmScoreBtn'); 
-  const startButton = document.getElementById('startButton'); 
-  const restartButton = document.getElementById('restartButton');
-  const resumeButton = document.getElementById('resumeButton'); 
-  const gameContainer = document.getElementById('gameContainer');
-  const player = document.getElementById('player');
+  const startButton = document.getElementById('startButton'); // Başlat butonunu yakala
   
   
   // --- Sabitler ---
@@ -348,23 +344,11 @@ window.onload = function() {
   const LEADERBOARD_KEY = 'fallingGameHighScores'; 
   const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
   
-  // GÖRSEL URL'leri
   function getImageUrl(index) {
-      const urls = [
-        'https://picsum.photos/1920/1080?random=1',
-        'https://picsum.photos/1920/1080?random=2',
-        'https://picsum.photos/1920/1080?random=3',
-        'https://picsum.photos/1920/1080?random=4',
-        'https://picsum.photos/1920/1080?random=5',
-        'https://picsum.photos/1920/1080?random=6',
-        'https://picsum.photos/1920/1080?random=7',
-        'https://picsum.photos/1920/1080?random=8',
-        'https://picsum.photos/1920/1080?random=9'
-      ];
-      return urls[index % urls.length];
+      return ''; 
   }
   
-  // Tema listesi
+  // Tema listesi (Sadece renkler)
   const themes = [
     { name: "NEBULA 1", bgColor: "#34495e", obstacleColor: "#5D6D7E" }, 
     { name: "MARS 2", bgColor: "#7f8c8d", obstacleColor: "#E74C3C" }, 
@@ -444,7 +428,7 @@ window.onload = function() {
       const themeIndex = level % themes.length; 
       const theme = themes[themeIndex];
       
-      body.style.backgroundImage = `url('${getImageUrl(themeIndex)}')`;
+      body.style.backgroundImage = 'none';
       body.style.backgroundColor = theme.bgColor;
 
       currentObstacleColor = theme.obstacleColor; 
@@ -541,18 +525,10 @@ window.onload = function() {
         animationFrameId = null; 
     }
     clearInterval(timerInterval);
-    
-    // V56: Bütün ekranları gizle, sadece başlangıcı göster.
-    startScreen.classList.remove('hidden');
-    endScreen.classList.add('hidden');
-    pauseScreen.classList.add('hidden');
-    document.getElementById('scoreboard').classList.add('hidden');
-    document.getElementById('timer').classList.add('hidden');
   }
 
   // Oyun başlatma mantığı
   window.initGameLogic = function() {
-    // V56: Oyun mantığı başlamadan önce resetle
     resetGame(); 
     
     latestUsername = usernameInput.value.trim() || "Anonim";
@@ -560,7 +536,6 @@ window.onload = function() {
     
     isGameOver = false;
     
-    // V56: Başlangıç ekranını kesin olarak kapat
     startScreen.classList.add('hidden');
     endScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
@@ -812,7 +787,10 @@ window.onload = function() {
   loadStartScreenImage();
   resetGame(); 
 
-  // BAŞLANGIÇ FIX'i: Start butonu tıklandığında initGameLogic'i çağırır.
+  const restartButton = document.getElementById('restartButton');
+  const resumeButton = document.getElementById('resumeButton'); 
+
+  // V53 ÇÖZÜMÜ: Start butonu tıklandığında initGameLogic'i çağırır.
   if (startButton) {
       startButton.addEventListener('click', () => {
           window.initGameLogic(); 
