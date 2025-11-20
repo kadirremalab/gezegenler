@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V51 - Kesin Başlangıç)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V53 - Kesin Başlangıç)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
@@ -203,7 +203,7 @@
     background-color: #34A853;
     color: white;
     transition: background-color 0.3s;
-    font-family: 'Press +Start 2P', cursive;
+    font-family: 'Press Start 2P', cursive;
     font-size: 0.8em;
   }
   .btn:hover {
@@ -270,7 +270,7 @@
         <label for="usernameInput" style="font-size: 1.2em; margin-top: 10px; color: #f1c40f;">Kullanıcı Adınız:</label>
         <input type="text" id="usernameInput" placeholder="Adınızı Girin" maxlength="15" value="Anonim">
         
-        <button id="startButton" class="btn" onclick="startGame()">Oyunu Başlat</button>
+        <button id="startButton" class="btn">Oyunu Başlat</button>
     </div>
 
     <div id="endScreen" class="screen-overlay hidden">
@@ -304,21 +304,9 @@
 </div>
 
 <script>
-// V51 GÜVENLİK ADIMI 1: startGame fonksiyonunu window.onload'dan önce, yani tarayıcının en hızlı ve en görünür olduğu GLOBAL alanda tanımlıyoruz. HTML butonu bu fonksiyonu HATA OLMADAN bulmak zorundadır.
-function startGame() {
-    // initGameLogic fonksiyonunun yüklendiğini kontrol ederek çağırır.
-    if (typeof window.initGameLogic === 'function') {
-        window.initGameLogic();
-    } else {
-        console.error("Hata: initGameLogic fonksiyonu yüklenemedi. 'window.onload' tamamlanmamış olabilir.");
-        alert("Oyun başlatılamadı. Lütfen dosyayı kaydedip tarayıcınızı Ctrl+Shift+R ile yenileyin.");
-    }
-}
-
-
 window.onload = function() {
   
-  // V51: Ses hatasını önlemek için boş fonksiyonlar.
+  // V53: Ses objelerini hata vermemeleri için boş fonksiyonlarla tanımla.
   const scoreSound = { play: () => {} };
   const collisionSound = { play: () => {} };
   
@@ -334,6 +322,7 @@ window.onload = function() {
   const usernameInput = document.getElementById('usernameInput'); 
   const endUsernameInput = document.getElementById('endUsernameInput'); 
   const confirmScoreBtn = document.getElementById('confirmScoreBtn'); 
+  const startButton = document.getElementById('startButton'); // Başlat butonunu yakala
   
   
   // --- Sabitler ---
@@ -355,7 +344,6 @@ window.onload = function() {
   const LEADERBOARD_KEY = 'fallingGameHighScores'; 
   const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
   
-  // V51: Harici resim kullanmıyoruz (Hata önleme)
   function getImageUrl(index) {
       return ''; 
   }
@@ -399,7 +387,6 @@ window.onload = function() {
   let latestUsername = "Anonim"; 
 
   // --- Yardımcı Fonksiyonlar ---
-
   function playScoreSound() { scoreSound.play(); }
   function playCollisionSound() { collisionSound.play(); }
   function playPowerupSound() { /* Ses kodları burada olsaydı çalışırdı */ }
@@ -441,7 +428,6 @@ window.onload = function() {
       const themeIndex = level % themes.length; 
       const theme = themes[themeIndex];
       
-      // V51: Resimler devre dışı olduğu için sadece düz renk kullan
       body.style.backgroundImage = 'none';
       body.style.backgroundColor = theme.bgColor;
 
@@ -541,7 +527,7 @@ window.onload = function() {
     clearInterval(timerInterval);
   }
 
-  // V51 GÜVENLİK ADIMI 2: Oyun başlatma mantığını, global startGame() fonksiyonunun çağırabileceği şekilde window.onload içinde tanımlıyoruz.
+  // Oyun başlatma mantığı
   window.initGameLogic = function() {
     resetGame(); 
     
@@ -576,4 +562,290 @@ window.onload = function() {
     clearInterval(timerInterval);
     if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
     
-    endUsernameInput.value
+    endUsernameInput.value = latestUsername;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalTime').textContent = document.getElementById('timeValue').textContent;
+    
+    endScreen.classList.remove('hidden');
+    player.style.backgroundColor = '#e74c3c'; 
+    
+    document.getElementById('scoreboard').classList.add('hidden');
+    document.getElementById('timer').classList.add('hidden');
+    
+    document.getElementById('scoreEntry').classList.remove('hidden');
+    confirmScoreBtn.classList.remove('hidden');
+    leaderboardList.innerHTML = '<li>Skorunuzu kaydetmek için adınızı onaylayın.</li>'; 
+  }
+  
+  function confirmAndShowLeaderboard() {
+      const finalUsername = endUsernameInput.value.trim() || "Anonim";
+      latestUsername = finalUsername.substring(0, 15); 
+      
+      saveScore(latestUsername, score);
+      showLeaderboard(latestUsername); 
+      
+      confirmScoreBtn.classList.add('hidden');
+  }
+  
+  function createObstacle() {
+    const gameWidth = window.innerWidth;
+    const gapWidth = Math.floor(Math.random() * (maxGapWidth - minGapWidth + 1)) + minGapWidth;
+    const maxGapX = gameWidth - gapWidth;
+    const gapStartX = Math.floor(Math.random() * maxGapX); 
+
+    const obstacleRowDiv = document.createElement('div');
+    obstacleRowDiv.classList.add('obstacle-row');
+    obstacleRowDiv.style.bottom = `${-OBSTACLE_HEIGHT}px`; 
+    obstacleRowDiv.style.height = `${OBSTACLE_HEIGHT}px`; 
+
+    if (gapStartX > 0) {
+      const leftSegment = document.createElement('div');
+      leftSegment.classList.add('obstacle-segment');
+      leftSegment.style.width = `${gapStartX}px`;
+      leftSegment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
+      obstacleRowDiv.appendChild(leftSegment);
+    }
+
+    const gapDiv = document.createElement('div');
+    gapDiv.classList.add('obstacle-gap');
+    gapDiv.style.width = `${gapWidth}px`;
+    obstacleRowDiv.appendChild(gapDiv);
+
+    const rightSegmentWidth = gameWidth - gapStartX - gapWidth;
+    if (rightSegmentWidth > 0) {
+      const rightSegment = document.createElement('div');
+      rightSegment.classList.add('obstacle-segment');
+      rightSegment.style.width = `${rightSegmentWidth}px`;
+      rightSegment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
+      obstacleRowDiv.appendChild(rightSegment);
+    }
+
+    gameContainer.appendChild(obstacleRowDiv);
+
+    const isOscillating = Math.random() < 0.3; 
+    let oscillationOffset = 0;
+    let oscillationDirection = 1; 
+
+    if (isOscillating) {
+        oscillationDirection = Math.random() < 0.5 ? 1 : -1; 
+    }
+
+    obstacles.push({
+      element: obstacleRowDiv,
+      bottomY: -OBSTACLE_HEIGHT, 
+      gapStartX: gapStartX,
+      gapEndX: gapStartX + gapWidth,
+      passed: false,
+      isOscillating: isOscillating,      
+      oscillationOffset: oscillationOffset, 
+      oscillationDirection: oscillationDirection 
+    });
+  }
+
+  function spawnPowerup() {
+      if (!isGameOver) {
+          powerupPos.x = Math.random() * (window.innerWidth - POWERUP_SIZE);
+          powerupPos.y = Math.random() * (window.innerHeight - OBSTACLE_HEIGHT - POWERUP_SIZE * 2) + OBSTACLE_HEIGHT;
+          
+          powerupElement.style.left = `${powerupPos.x}px`;
+          powerupElement.style.top = `${powerupPos.y}px`;
+          powerupElement.classList.remove('hidden');
+          lastPowerupSpawnTime = Date.now();
+      }
+  }
+
+  function activatePowerup() {
+      if (isPowerupActive) return;
+      playPowerupSound(); 
+      isPowerupActive = true;
+      
+      powerupElement.classList.add('hidden');
+      powerupPos = { x: -100, y: -100 };
+
+      currentObstacleMoveSpeed /= 2;
+      body.classList.add('slow-motion-body'); 
+
+      setTimeout(deactivatePowerup, POWERUP_DURATION);
+  }
+
+  function deactivatePowerup() {
+      isPowerupActive = false;
+      
+      const difficultyBase = Math.floor(score / 10);
+      currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
+      body.classList.remove('slow-motion-body'); 
+  }
+  
+  // --- Ana Oyun Döngüsü ---
+
+  function update() {
+    if (isGameOver || isPaused) {
+      animationFrameId = null; 
+      return; 
+    }
+
+    let isMovingCommand = false;
+    
+    // Hareket Kontrolü
+    if (keys['ArrowLeft'] || keys['KeyA']) { velocityX = -currentThrustSpeed; isMovingCommand = true; } 
+    else if (keys['ArrowRight'] || keys['KeyD']) { velocityX = currentThrustSpeed; isMovingCommand = true; } 
+    else { velocityX = 0; }
+    if (keys['ArrowUp'] || keys['KeyW']) { velocityY = -currentThrustSpeed; isMovingCommand = true; } 
+    else if (keys['ArrowDown'] || keys['KeyS']) { velocityY = currentThrustSpeed; isMovingCommand = true; } 
+    else { velocityY = 0; }
+    if (Math.abs(velocityX) > maxVelocity) { velocityX = Math.sign(velocityX) * maxVelocity; }
+    if (Math.abs(velocityY) > maxVelocity) { velocityY = Math.sign(velocityY) * maxVelocity; }
+
+    playerPosX += velocityX; playerPosY += velocityY; 
+
+    if (isMovingCommand) { startTiming(); }
+    
+    // Sınır Kontrolleri
+    if (playerPosX < 0) { playerPosX = 0; velocityX = 0; }
+    if (playerPosX > window.innerWidth - playerSize) { playerPosX = window.innerWidth - playerSize; velocityX = 0; }
+    if (playerPosY < 0) { playerPosY = 0; velocityY = 0; }
+    if (playerPosY > window.innerHeight - playerSize) { playerPosY = window.innerHeight - playerSize; velocityY = 0; }
+
+    player.style.left = `${playerPosX}px`;
+    player.style.top = `${playerPosY}px`; 
+
+    // Güçlendirme Oluşturma ve Çarpışma
+    if (gameInteractionStarted && Date.now() - lastPowerupSpawnTime > POWERUP_SPAWN_INTERVAL && powerupElement.classList.contains('hidden')) { spawnPowerup(); }
+    
+    if (!powerupElement.classList.contains('hidden')) {
+        const pLeft = playerPosX; const pRight = playerPosX + playerSize;
+        const pTop = playerPosY; const pBottom = playerPosY + playerSize;
+        const puLeft = powerupPos.x; const puRight = powerupPos.x + POWERUP_SIZE;
+        const puTop = powerupPos.y; const puBottom = powerupPos.y + POWERUP_SIZE;
+
+        if (pRight > puLeft && pLeft < puRight && pBottom > puTop && pTop < puBottom) {
+            activatePowerup();
+        }
+    }
+
+    // Engel oluşturma
+    if (gameInteractionStarted && Date.now() - lastObstacleSpawnTime > obstacleSpawnInterval) { 
+      createObstacle();
+      lastObstacleSpawnTime = Date.now();
+    }
+
+    // Engelleri hareket ettir ve Çarpışma Kontrolü
+    for (let i = 0; i < obstacles.length; i++) {
+      let obs = obstacles[i];
+      obs.bottomY += currentObstacleMoveSpeed; 
+      obs.element.style.bottom = `${obs.bottomY}px`;
+      
+      // Yatay Sallanma Hareketi
+      if (obs.isOscillating) {
+          obs.oscillationOffset += obs.oscillationDirection * HORIZONTAL_OSCILLATION_SPEED;
+          
+          if (obs.oscillationOffset > MAX_OSCILLATION_RANGE || obs.oscillationOffset < -MAX_OSCILLATION_RANGE) {
+              obs.oscillationDirection *= -1; 
+          }
+          obs.element.style.transform = `translateX(${obs.oscillationOffset}px)`;
+      }
+
+      // Çarpışma Kontrolü:
+      const obstacleTopY = window.innerHeight - obs.bottomY - OBSTACLE_HEIGHT;
+      const obstacleBottomY = window.innerHeight - obs.bottomY; 
+
+      if (playerPosY + playerSize > obstacleTopY && playerPosY < obstacleBottomY) {
+        const obsGapStartX_Adjusted = obs.gapStartX + obs.oscillationOffset;
+        const obsGapEndX_Adjusted = obs.gapEndX + obs.oscillationOffset;
+        const playerCenter = playerPosX + (playerSize / 2); 
+        
+        if (playerCenter < obsGapStartX_Adjusted || playerCenter > obsGapEndX_Adjusted) {
+            const horizontalCollision = (playerPosX < obsGapStartX_Adjusted && playerPosX + playerSize > obsGapStartX_Adjusted) || 
+                                        (playerPosX < obsGapEndX_Adjusted && playerPosX + playerSize > obsGapEndX_Adjusted);       
+            
+            if (horizontalCollision) {
+                gameOver(); 
+                return;
+            }
+        }
+      }
+
+      if (obs.bottomY > window.innerHeight && !obs.passed) {
+        score++;
+        playScoreSound(); 
+        document.getElementById('scoreboard').textContent = `${themes[currentLevel % themes.length].name} | Skor: ${score}`;
+        obs.passed = true;
+      }
+
+      if (obs.bottomY > window.innerHeight) {
+        obs.element.remove();
+        obstacles.splice(i, 1);
+        i--; 
+      }
+    }
+    
+    animationFrameId = requestAnimationFrame(update); 
+  }
+
+  // --- Olay Dinleyicileri ---
+  
+  loadStartScreenImage();
+  resetGame(); 
+
+  const restartButton = document.getElementById('restartButton');
+  const resumeButton = document.getElementById('resumeButton'); 
+
+  // V53 ÇÖZÜMÜ: Start butonu tıklandığında initGameLogic'i çağırır.
+  if (startButton) {
+      startButton.addEventListener('click', () => {
+          window.initGameLogic(); 
+      });
+  }
+
+  if (restartButton) {
+      restartButton.addEventListener('click', () => {
+          loadStartScreenImage();
+          window.initGameLogic(); 
+      });
+  }
+  
+  if (resumeButton) {
+      resumeButton.addEventListener('click', togglePause);
+  }
+  
+  if (confirmScoreBtn) {
+      confirmScoreBtn.addEventListener('click', confirmAndShowLeaderboard);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) { 
+        window.initGameLogic(); 
+        e.preventDefault();
+        return;
+    }
+    if (!isGameOver) {
+        if (e.code === 'KeyP' || e.code === 'Escape' || e.code === 'Space') { 
+            togglePause();
+            e.preventDefault(); 
+            return;
+        }
+        if (isPaused) return;
+        if (MOVEMENT_KEYS.includes(e.code)) { startTiming(); }
+        if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = true;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = true;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = true;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = true;
+        keys[e.code] = true;
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (!isGameOver && !isPaused) {
+        if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = false;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = false;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = false;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = false;
+        keys[e.code] = false;
+    }
+  });
+
+}; // window.onload bloğunun sonu
+</script>
+
+</body>
+</html>
