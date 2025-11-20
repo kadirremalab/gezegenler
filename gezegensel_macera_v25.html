@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V47 - Görsel ve Sesli)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V48 - TAM STABİL)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
-    /* 1. ARKA PLAN VE GENEL STİLLER (BEYAZ EKRAN HATASINI ÖNLEMEK İÇİN GÜÇLENDİRİLDİ) */
+    /* 1. ARKA PLAN VE GENEL STİLLER */
     body {
         overflow: hidden;
-        background-color: #34495e; /* Varsayılan Arkaplan Rengi */
+        background-color: #34495e; 
         font-family: Arial, sans-serif;
         margin: 0;
-        transition: background-color 1s ease, background-image 1s ease;
+        /* Görsel geçişi için süre tanır */
+        transition: background-image 1s ease, filter 0.5s ease;
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -36,13 +37,14 @@
     .obstacle-row { position: absolute; bottom: -30px; left: 0; width: 100%; display: flex; align-items: center; z-index: 40; height: 30px; }
     .obstacle-segment { 
         height: 100%; 
-        background: radial-gradient(circle at 50% 50%, #f7f7f7 0%, #5D6D7E 100%); /* Varsayılan Engel Rengi */
+        background: radial-gradient(circle at 50% 50%, #f7f7f7 0%, #5D6D7E 100%); 
         box-shadow: 0 0 8px rgba(0, 0, 0, 0.5); border-radius: 5px; 
+        transition: background-color 0.5s ease; /* Tema değişiminde yumuşak geçiş */
     }
     .obstacle-gap { background-color: transparent; height: 100%; }
 
     /* 4. ARAYÜZ VE BUTON STİLLERİ */
-    .info-box { position: absolute; padding: 10px; background-color: rgba(0, 0, 0, 0.5); color: white; border-radius: 5px; z-index: 100; font-family: 'Press Start 2P', cursive; font-size: 0.8em; }
+    .info-box { position: absolute; padding: 10px; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 5px; z-index: 100; font-family: 'Press Start 2P', cursive; font-size: 0.8em; }
     #scoreboard { top: 10px; left: 10px; }
     #timer { top: 10px; right: 10px; }
     
@@ -102,7 +104,114 @@
 </div>
 
 <script>
-    // --- V47: Ses ve Görsel Dosyaları için güncellendi ---
+    // ----------------------------------------------------------------------
+    // V48 - GÖRSEL VE SES DOSYASI YOLLARI
+    // ----------------------------------------------------------------------
 
-    // GÖRSEL VE SES DOSYALARININ YOLU - LÜTFEN BU ADRESİ KONTROL EDİN!
-    const BASE_URL = 'https://kadirremalab
+    // BASE_URL = './' AYARI SAYESİNDE, DOSYALARIN HTML İLE AYNI KLASÖRDE OLMASI GEREKİR.
+    const BASE_URL = './'; 
+    
+    // GÖRSEL DOSYALARININ UZANTISI (.jpeg, .png, vb.)
+    const IMAGE_EXTENSION = '.jpeg'; 
+    
+    // SES DOSYALARINI YÜKLE - Buradaki isimler kesinlikle doğru olmalı!
+    try {
+        var scoreSound = new Audio(BASE_URL + 'score_sound.mp3');
+        var collisionSound = new Audio(BASE_URL + 'collision_sound.mp3');
+        var powerupSound = new Audio(BASE_URL + 'powerup_sound.mp3');
+    } catch (e) {
+        console.error("Ses dosyaları yüklenemedi. Sanal ses nesneleri kullanılıyor.");
+        // Yükleme başarısız olursa, hatayı önlemek için sahte nesneler kullanırız.
+        var scoreSound = { play: () => {} };
+        var collisionSound = { play: () => {} };
+        var powerupSound = { play: () => {} };
+    }
+    
+    function playScoreSound() { scoreSound.play(); }
+    function playCollisionSound() { collisionSound.play(); }
+    function playPowerupSound() { powerupSound.play(); }
+
+    // --- DOM ve Sabit Tanımlar ---
+    const body = document.body;
+    const gameContainer = document.getElementById('gameContainer');
+    const player = document.getElementById('player');
+    const leaderboardList = document.getElementById('leaderboardList'); 
+    const powerupElement = document.getElementById('powerup'); 
+    const startScreen = document.getElementById('startScreen');
+    const endScreen = document.getElementById('endScreen');
+    const pauseScreen = document.getElementById('pauseScreen'); 
+    const usernameInput = document.getElementById('usernameInput'); 
+    const endUsernameInput = document.getElementById('endUsernameInput'); 
+    const confirmScoreBtn = document.getElementById('confirmScoreBtn'); 
+    
+    const playerSize = 40;
+    const initialThrustSpeed = 8; 
+    const maxVelocity = 15; 
+    const OBSTACLE_HEIGHT = 30; 
+    const minGapWidth = 80; 
+    const maxGapWidth = 150; 
+    const initialObstacleMoveSpeed = 2; 
+    
+    const POWERUP_SIZE = 25; 
+    const POWERUP_DURATION = 5000; 
+    const POWERUP_SPAWN_INTERVAL = 15000; 
+
+    const HORIZONTAL_OSCILLATION_SPEED = 1; 
+    const MAX_OSCILLATION_RANGE = 200; 
+
+    const LEADERBOARD_KEY = 'fallingGameHighScores'; 
+    const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
+    
+    // Tema verileri (renkler artık sadece engel için yedek olarak var, arkaplan resim kullanacak)
+    const themes = [
+        { name: "NEBULA 1", obstacleColor: "#5D6D7E" }, 
+        { name: "MARS 2", obstacleColor: "#E74C3C" }, 
+        { name: "JUPITER 3", obstacleColor: "#F1C40F" }, 
+        { name: "NEPTUNE 4", obstacleColor: "#3498DB" }, 
+        { name: "VULCAN 5", obstacleColor: "#9B59B6" }, 
+        { name: "TITAN 6", obstacleColor: "#1ABC9C" }, 
+        { name: "SATURN 7", obstacleColor: "#D35400" }, 
+        { name: "GANYMEDE 8", obstacleColor: "#2C3E50" }, 
+        { name: "URANUS 9", obstacleColor: "#ECF0F1" }    
+    ];
+
+    let currentThrustSpeed = initialThrustSpeed; 
+    let currentObstacleMoveSpeed = initialObstacleMoveSpeed;
+    let obstacleSpawnInterval = 1500; 
+    let playerPosX; 
+    let playerPosY; 
+    let velocityX = 0; 
+    let velocityY = 0; 
+    let score = 0;
+    let isGameOver = true; 
+    let isPaused = false; 
+    let gameInteractionStarted = false; 
+    let keys = {}; 
+    let startTime = 0;
+    let timerInterval;
+    let animationFrameId;
+    let lastObstacleSpawnTime = 0;
+    let lastPowerupSpawnTime = 0; 
+    let obstacles = []; 
+    let currentLevel = 0; 
+    let currentObstacleColor = themes[0].obstacleColor; 
+    let isPowerupActive = false; 
+    let powerupPos = { x: -100, y: -100 }; 
+    let latestUsername = "Anonim"; 
+    
+    // --- Oyun Kontrol Fonksiyonları ---
+    
+    function getHighScores() {
+        const scores = localStorage.getItem(LEADERBOARD_KEY);
+        return scores ? JSON.parse(scores) : [];
+    }
+    function saveScore(username, score) {
+        let scores = getHighScores();
+        const newScore = { username, score, date: new Date().toLocaleString() };
+        scores.push(newScore);
+        scores.sort((a, b) => b.score - a.score);
+        scores = scores.slice(0, 10); 
+        localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(scores));
+    }
+    function showLeaderboard(latestUsername) {
+        const scores = getHighScores();
