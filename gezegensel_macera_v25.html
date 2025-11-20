@@ -1,536 +1,309 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V38 - Fizik ve Mobil)</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Yer Çekimsiz Gezegen Macerası — Meteor Kaçış (Fix)</title>
 <style>
-  body {
-    overflow: hidden;
-    background-color: #34495e; 
-    font-family: Arial, sans-serif;
-    margin: 0;
-    transition: background-color 1s ease, background-image 1s ease; 
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-  
-  #gameContainer {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    cursor: default;
-  }
-
-  /* PLAYER STİLİ (Alev Topu) */
-  #player { 
-    width: 40px;
-    height: 40px;
-    position: absolute;
-    top: 50%; 
-    left: 50%; 
-    transform: translate(-50%, -50%); 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: transparent; 
-    font-weight: bold;
-    font-size: 10px;
-    z-index: 50; 
-    transition: all 0.1s ease; 
-    background: radial-gradient(circle at 50% 50%, #ffcc00 0%, #ff6600 50%, #cc0000 100%);
-    border-radius: 50%;
-    box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    animation: flamePulse 1.5s infinite alternate; 
-  }
-
-  @keyframes flamePulse {
-    0% {
-      transform: translate(-50%, -50%) scale(1);
-      box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    }
-    50% {
-      transform: translate(-50%, -50%) scale(1.05);
-      box-shadow: 0 0 20px 8px rgba(255, 102, 0, 0.8), 0 0 40px 15px rgba(255, 0, 0, 0.6);
-    }
-    100% {
-      transform: translate(-50%, -50%) scale(1);
-      box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    }
-  }
-  
-  .obstacle-row { 
-    position: absolute;
-    bottom: -30px; 
-    left: 0;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    z-index: 40; 
-  }
-  .obstacle-segment { 
-    background: radial-gradient(circle at 50% 50%, #f7f7f7 0%, #aaa 100%); 
-    height: 100%;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-    border-radius: 5px; 
-  }
-  .obstacle-gap { 
-    background-color: transparent; 
-    height: 100%;
-  }
-
-  /* V34: GÜÇLENDİRME STİLİ */
-  #powerup {
-    position: absolute;
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #3498db 0%, #2ecc71 100%); 
-    box-shadow: 0 0 10px rgba(52, 152, 219, 0.9);
-    z-index: 60;
-    animation: spin 3s linear infinite;
-    cursor: pointer;
-  }
-
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-  }
-
-  /* V34: Yavaş Hareket Efekti */
-  .slow-motion-body {
-      filter: blur(2px) brightness(80%); 
-  }
-
-  .info-box {
-    position: absolute;
-    padding: 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    border-radius: 5px;
-    z-index: 100;
-  }
-  #scoreboard { top: 10px; left: 10px; }
-  #timer { top: 10px; right: 10px; }
-
-  .screen-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); 
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    z-index: 1000;
-  }
-  .hidden {
-    display: none !important;
-  }
-
-  /* V36: Oyun Bitti Ekranı Görsel Geliştirmeler */
-  #endScreen h1 {
-      font-size: 4em; 
-      color: #e74c3c; 
-      text-shadow: 0 0 15px rgba(231, 76, 60, 0.8); 
-      margin-bottom: 5px;
-  }
-  #endScreen h2 {
-      font-size: 2.5em; 
-      color: #f1c40f; 
-      margin-top: 10px;
-  }
-  #finalScore {
-      font-weight: bold;
-      font-size: 1.2em;
-  }
-  #endScreen p {
-      font-size: 1.2em;
-      color: #bdc3c7;
-  }
-  .btn {
-    padding: 15px 30px;
-    margin-top: 20px;
-    font-size: 20px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background-color: #34A853;
-    color: white;
-    transition: background-color 0.3s;
-  }
-  .btn:hover {
-    background-color: #2b8443;
-  }
-  #endScreen .btn {
-      background-color: #e74c3c; 
-  }
-  #endScreen .btn:hover {
-      background-color: #c0392b;
-  }
-
-  #leaderboardList {
-      margin-top: 10px;
-      list-style: none;
-      padding: 0;
-      max-width: 300px;
-      width: 80%;
-      text-align: left;
-      font-size: 1.1em;
-  }
-  #leaderboardList li {
-      padding: 5px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-  }
+  :root{ --player-size: 48px; --meteor-size: 34px; --ui-padding:10px }
+  html,body{height:100%;}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#111;color:#fff;overflow:hidden}
+  #gameContainer{position:relative;width:100vw;height:100vh;background-size:cover;background-position:center}
+  #player{position:absolute;width:var(--player-size);height:var(--player-size);border-radius:50%;background:radial-gradient(circle,#ffd54f,#ff7043);box-shadow:0 0 18px rgba(255,112,67,0.6);touch-action:none;display:flex;align-items:center;justify-content:center;font-weight:bold}
+  .meteor{position:absolute;border-radius:50%;background:linear-gradient(135deg,#666,#222);box-shadow:0 6px 18px rgba(0,0,0,0.6);}
+  .ui{position:absolute;padding:var(--ui-padding);background:rgba(0,0,0,0.4);border-radius:8px;font-size:14px}
+  #scoreBox{left:12px;top:12px}
+  #timeBox{right:12px;top:12px}
+  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:200}
+  .hidden{display:none}
+  .btn{padding:10px 16px;border-radius:8px;border:none;background:#2ecc71;color:white;font-size:16px;cursor:pointer}
+  #touchPad{position:absolute;bottom:12px;left:12px;width:120px;height:120px;border-radius:12px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;z-index:150}
+  #touchPad .stick{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.08)}
+  @media(min-width:700px){#touchPad{display:none}}
 </style>
 </head>
 <body>
-
 <div id="gameContainer">
-    <div id="startScreen" class="screen-overlay">
-        <h1>Yer Çekimsiz Gezegen Macerası</h1>
-        <p>Kural: Ortada **tam serbest hareket** ile engellerdeki boşluklardan geç! **Her 20 skorda gezegen değişir**.</p>
-        <p>Kontroller: **Ok tuşları** veya **WASD** (Masaüstü) / **Ekrana Dokun** (Mobil) ile itme kuvveti uygula.</p>
-        <button id="startButton" class="btn">Oyunu Başlat</button>
+  <div id="startOverlay" class="overlay">
+    <div style="text-align:center;max-width:420px">
+      <h1>Yer Çekimsiz — Meteor Kaçış</h1>
+      <p>Kontrol: 360° serbest hareket (ok tuşları / WASD / mobilde sürükle). Meteorlardan kaç — çarparsan oyun biter.</p>
+      <p>Her 10 skor seviyesinde arka plan değişir.</p>
+      <button id="startBtn" class="btn">Başlat</button>
     </div>
+  </div>
 
-    <div id="endScreen" class="screen-overlay hidden">
-        <h1>OYUN BİTTİ!</h1>
-        <h2>Final Skorunuz: <span id="finalScore">0</span></h2>
-        <p>Oynama Süresi: <span id="finalTime">00:00</span></p>
-        
-        <h3>Top 10 Skor Tablosu</h3>
-        <ul id="leaderboardList"></ul>
-
-        <button id="restartButton" class="btn">Tekrar Oyna</button>
+  <div id="endOverlay" class="overlay hidden">
+    <div style="text-align:center;max-width:420px;color:#fff">
+      <h2>Oyun Bitti</h2>
+      <p>Skorun: <span id="finalScore">0</span></p>
+      <p>Süre: <span id="finalTime">00:00</span></p>
+      <input id="nameInput" placeholder="Kullanıcı adı" style="padding:8px;border-radius:6px;border:none;margin-bottom:8px;width:80%" />
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="saveBtn" class="btn">Kaydet</button>
+        <button id="replayBtn" class="btn" style="background:#e74c3c">Tekrar</button>
+      </div>
+      <h3 style="margin-top:12px">Top 10</h3>
+      <ul id="leader" style="text-align:left;max-height:160px;overflow:auto;padding:0 12px"></ul>
     </div>
+  </div>
 
-    <div id="scoreboard" class="info-box hidden">Skor: <span id="scoreValue">0</span></div>
-    <div id="timer" class="info-box hidden">Süre: <span id="timeValue">00:00</span></div>
-    
-    <div id="player"></div>
-    <div id="powerup" class="hidden"></div> 
+  <div id="scoreBox" class="ui">Skor: <span id="score">0</span></div>
+  <div id="timeBox" class="ui">Süre: <span id="timer">00:00</span></div>
+
+  <div id="player">●</div>
+  <div id="touchPad"><div class="stick" id="stick"></div></div>
 </div>
 
-<audio id="scoreSound" src="score_sound.mp3" preload="auto"></audio>
-<audio id="collisionSound" src="collision_sound.mp3" preload="auto"></audio>
-
 <script>
-  const body = document.body;
-  const gameContainer = document.getElementById('gameContainer');
-  const player = document.getElementById('player');
-  const leaderboardList = document.getElementById('leaderboardList'); 
-  const powerupElement = document.getElementById('powerup'); 
-  
-  const scoreSound = document.getElementById('scoreSound');
-  const collisionSound = document.getElementById('collisionSound');
-  
-  // --- Sabitler (FİZİK GÜNCELLEMELERİ V38) ---
-  const playerSize = 40;
-  const ACCELERATION = 0.5; // İvmelenme hızı (Ne kadar hızlı ivme kazanır)
-  const DRAG = 0.98;        // Sürtünme (Hızı yavaşlatır, 1.0 hiç yavaşlatmaz)
-  const maxVelocity = 10;   // Maksimum Hız (Çok hızlı gitmesini engeller)
-  
-  const OBSTACLE_HEIGHT = 30; 
-  const minGapWidth = 80; 
-  const maxGapWidth = 150; 
-  const initialObstacleMoveSpeed = 2; 
-  
-  const POWERUP_SIZE = 25; 
-  const POWERUP_DURATION = 5000; 
-  const POWERUP_SPAWN_INTERVAL = 15000; 
+// === MEGA SÜRÜM: TÜM EFEKTLER EKLENDİ ===
+recalcSizes();
 
-  const HORIZONTAL_OSCILLATION_SPEED = 1; 
-  const MAX_OSCILLATION_RANGE = 200; 
+let playerPosX = window.innerWidth/2;
+let playerPosY = window.innerHeight/2;
+let velocityX = 0, velocityY = 0;
+let score = 0;
+let isGameOver = true;
+let keys = {};
+let animationFrameId;
 
-  const LEADERBOARD_KEY = 'fallingGameHighScores'; 
-  const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
-  
-  const BASE_URL = 'https://kadirremalab.github.io/gezegenler/';
-  const IMAGE_EXTENSION = '.jpeg'; 
-  
-  function getImageUrl(index) {
-      const cacheBuster = Date.now();
-      return `url('${BASE_URL}${index}-donusturuldugu-kaynak-png${IMAGE_EXTENSION}?v=${cacheBuster}')`;
+// === POWER-UP DURUMLARI ===
+let shieldActive = false;
+let speedBoostActive = false;
+let invisibilityActive = false;
+
+// === POWER-UP SÜRELERİ ===
+const SHIELD_DURATION = 6000;
+const SPEED_DURATION = 5000;
+const INVIS_DURATION = 4500;
+
+// === METEOR SİSTEMİ ===
+let meteorList = [];
+let lastMeteorTime = 0;
+let METEOR_INTERVAL = 900;
+const METEOR_BASE_SIZE = 45;
+
+// === BLACK HOLE ===
+let blackHole = null;
+let BH_SPAWN_INTERVAL = 15000;
+let lastBlackHole = 0;
+
+// === EXPLOSION SPRITE ===
+function spawnExplosion(x,y){
+  const boom = document.createElement('div');
+  boom.style.position='absolute';
+  boom.style.left=x+'px';
+  boom.style.top=y+'px';
+  boom.style.width='80px';
+  boom.style.height='80px';
+  boom.style.background="url('explosion.gif') center/cover";
+  boom.style.pointerEvents='none';
+  gameContainer.appendChild(boom);
+  setTimeout(()=>boom.remove(),500);
+}
+
+// === STAR TRAIL ===
+function spawnTrail(){
+  const t = document.createElement('div');
+  t.style.position='absolute';
+  t.style.width='6px';
+  t.style.height='6px';
+  t.style.borderRadius='50%';
+  t.style.background='white';
+  t.style.left=(playerPosX+playerSize/2)+'px';
+  t.style.top=(playerPosY+playerSize/2)+'px';
+  t.style.opacity='0.8';
+  t.style.transition='opacity 0.6s linear';
+  gameContainer.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; },20);
+  setTimeout(()=>t.remove(),700);
+}
+
+// === BLACK HOLE CREATION ===
+function spawnBlackHole(){
+  const bh = document.createElement('div');
+  bh.style.position='absolute';
+  bh.style.width='120px';
+  bh.style.height='120px';
+  bh.style.background="url('blackhole.png') no-repeat center/cover";
+  bh.style.left = Math.random()*(window.innerWidth-120)+'px';
+  bh.style.top = Math.random()*(window.innerHeight-120)+'px';
+  bh.style.filter='drop-shadow(0 0 20px purple)';
+  gameContainer.appendChild(bh);
+  blackHole = { element:bh, x:parseFloat(bh.style.left), y:parseFloat(bh.style.top) };
+}
+
+// === BLACK HOLE GRAVITY ===
+function applyBlackHoleGravity(){
+  if(!blackHole) return;
+  const dx = (blackHole.x+60) - (playerPosX+playerSize/2);
+  const dy = (blackHole.y+60) - (playerPosY+playerSize/2);
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if(dist < 250){
+    velocityX += dx/dist * 0.4;
+    velocityY += dy/dist * 0.4;
   }
-  
-  const themes = [
-    { name: "Level 1", bgColor: "#34495e", bgImage: getImageUrl(0), obstacleColor: "#5D6D7E" }, 
-    { name: "Level 2", bgColor: "#7f8c8d", bgImage: getImageUrl(1), obstacleColor: "#E74C3C" }, 
-    { name: "Level 3", bgColor: "#e67e22", bgImage: getImageUrl(2), obstacleColor: "#F1C40F" }, 
-    { name: "Level 4", bgColor: "#2980b9", bgImage: getImageUrl(3), obstacleColor: "#3498DB" }, 
-    { name: "Level 5", bgColor: "#c0392b", bgImage: getImageUrl(4), obstacleColor: "#9B59B6" }, 
-    { name: "Level 6", bgColor: "#e9c46a", bgImage: getImageUrl(5), obstacleColor: "#1ABC9C" }, 
-    { name: "Level 7", bgColor: "#f39c12", bgImage: getImageUrl(6), obstacleColor: "#D35400" }, 
-    { name: "Level 8", bgColor: "#bdc3c7", bgImage: getImageUrl(7), obstacleColor: "#2C3E50" }, 
-    { name: "Level 9", bgColor: "#3498db", bgImage: getImageUrl(8), obstacleColor: "#ECF0F1" }  
-  ];
+  if(dist < 70 && !shieldActive){ gameOver(); }
+}
 
-  let currentObstacleMoveSpeed = initialObstacleMoveSpeed;
-  let obstacleSpawnInterval = 1500; 
-  let playerPosX; 
-  let playerPosY; 
-  let velocityX = 0; 
-  let velocityY = 0; 
-  let score = 0;
-  let isGameOver = true; 
-  let gameInteractionStarted = false; 
-  let keys = {}; 
-  let startTime = 0;
-  let timerInterval;
-  let animationFrameId;
-  let lastObstacleSpawnTime = 0;
-  let lastPowerupSpawnTime = 0; 
-  let obstacles = []; 
-  let currentLevel = 0; 
-  let currentObstacleColor = themes[0].obstacleColor; 
-  let isPowerupActive = false; 
-  let powerupPos = { x: -100, y: -100 }; 
+// === POWER-UP OLUŞTURMA ===
+function spawnPowerUp(){
+  const types = ['shield','speed','inv'];
+  const pick = types[Math.floor(Math.random()*types.length)];
+  const p = document.createElement('div');
+  p.className = 'powerup';
+  p.dataset.type = pick;
+  p.style.position='absolute';
+  p.style.width='35px';
+  p.style.height='35px';
+  p.style.left = Math.random()*(window.innerWidth-40)+'px';
+  p.style.top = Math.random()*(window.innerHeight-40)+'px';
+  p.style.background = pick==='shield' ? "cyan" : pick==='speed' ? "yellow" : "violet";
+  p.style.borderRadius='50%';
+  p.style.boxShadow='0 0 12px white';
+  gameContainer.appendChild(p);
+  setTimeout(()=>p.remove(),8000);
+}
+let lastPowerUp = 0;
 
-  function playScoreSound() {
-    if (scoreSound) {
-        scoreSound.currentTime = 0; 
-        scoreSound.play().catch(e => console.error("Skor sesi çalınamadı:", e));
-    }
+// === POWER-UP ETKİLERİ ===
+function activatePowerUp(type){
+  if(type==='shield'){
+    shieldActive = true;
+    player.style.boxShadow='0 0 20px cyan';
+    setTimeout(()=>{ shieldActive=false; player.style.boxShadow=''; }, SHIELD_DURATION);
+  }
+  if(type==='speed'){
+    speedBoostActive = true;
+    setTimeout(()=> speedBoostActive=false, SPEED_DURATION);
+  }
+  if(type==='inv'){
+    invisibilityActive = true;
+    player.style.opacity='0.35';
+    setTimeout(()=>{ invisibilityActive=false; player.style.opacity='1'; }, INVIS_DURATION);
+  }
+}
+
+// === METEOR SPAWN ===
+function spawnMeteor(){
+  const type = Math.random();
+  let size = METEOR_BASE_SIZE;
+  let speed = 4 + Math.random()*3;
+  let img = 'meteor.png';
+
+  if(type < 0.2){ size*=2; speed*=0.7; img='meteor_big.png'; }
+  else if(type > 0.75){ size*=0.6; speed*=1.35; img='meteor_small.png'; }
+
+  const meteor = document.createElement('div');
+  meteor.style.position='absolute';
+  meteor.style.width=size+'px';
+  meteor.style.height=size+'px';
+  meteor.style.background=`url('${img}') center/cover`;
+  meteor.style.filter='drop-shadow(0 0 10px orange)';
+  meteor.style.left=Math.random()*(window.innerWidth-size)+'px';
+  meteor.style.top='-80px';
+
+  const angle = (Math.random()*0.6) - 0.3;
+
+  gameContainer.appendChild(meteor);
+  meteorList.push({ element:meteor, vx:angle, vy:speed, x:parseFloat(meteor.style.left), y:-80, size });
+}
+
+// === GAME LOOP ===
+function update(){
+  if(isGameOver) return;
+
+  // Star trail
+  spawnTrail();
+
+  // Black hole spawn
+  if(Date.now() - lastBlackHole > BH_SPAWN_INTERVAL){
+    spawnBlackHole();
+    lastBlackHole = Date.now();
+  }
+  applyBlackHoleGravity();
+
+  // Power-up spawn
+  if(Date.now() - lastPowerUp > 7000){
+    spawnPowerUp();
+    lastPowerUp = Date.now();
   }
 
-  function playCollisionSound() {
-    if (collisionSound) {
-        collisionSound.currentTime = 0; 
-        collisionSound.play().catch(e => console.error("Çarpışma sesi çalınamadı:", e));
-    }
+  // Player movement
+  let speed = speedBoostActive ? 10 : 6;
+
+  if(keys['ArrowLeft']||keys['KeyA']) velocityX = -speed;
+  else if(keys['ArrowRight']||keys['KeyD']) velocityX = speed;
+  else velocityX = 0;
+
+  if(keys['ArrowUp']||keys['KeyW']) velocityY = -speed;
+  else if(keys['ArrowDown']||keys['KeyS']) velocityY = speed;
+  else velocityY = 0;
+
+  playerPosX += velocityX;
+  playerPosY += velocityY;
+
+  if(playerPosX < 0) playerPosX = 0;
+  if(playerPosX > window.innerWidth - playerSize) playerPosX = window.innerWidth - playerSize;
+  if(playerPosY < 0) playerPosY = 0;
+  if(playerPosY > window.innerHeight - playerSize) playerPosY = window.innerHeight - playerSize;
+
+  player.style.left=playerPosX+'px';
+  player.style.top=playerPosY+'px';
+
+  // Meteor spawn
+  if(Date.now()-lastMeteorTime > METEOR_INTERVAL){
+    spawnMeteor();
+    lastMeteorTime = Date.now();
   }
 
-  function playPowerupSound() {
-     // powerup_sound.mp3 dosyası eksik olduğu için sadece log yazılıyor.
-     console.log("Güçlendirme sesi çalındı!"); 
-  }
+  // Meteor movement + collision
+  for(let i=0;i<meteorList.length;i++){
+    const m = meteorList[i];
+    m.x+=m.vx;
+    m.y+=m.vy;
+    m.element.style.left=m.x+'px';
+    m.element.style.top=m.y+'px';
 
-  // --- Güçlendirme Fonksiyonları (V34) ---
-
-  function spawnPowerup() {
-      if (!isGameOver) {
-          powerupPos.x = Math.random() * (window.innerWidth - POWERUP_SIZE);
-          powerupPos.y = Math.random() * (window.innerHeight - OBSTACLE_HEIGHT - POWERUP_SIZE * 2) + OBSTACLE_HEIGHT;
-          
-          powerupElement.style.left = `${powerupPos.x}px`;
-          powerupElement.style.top = `${powerupPos.y}px`;
-          powerupElement.classList.remove('hidden');
-          lastPowerupSpawnTime = Date.now();
+    if(m.x < playerPosX+playerSize && m.x+m.size > playerPosX && m.y < playerPosY+playerSize && m.y+m.size > playerPosY){
+      if(shieldActive){
+        spawnExplosion(m.x,m.y);
+        m.element.remove(); meteorList.splice(i,1); i--; continue;
       }
-  }
-
-  function activatePowerup() {
-      if (isPowerupActive) return;
-      playPowerupSound(); 
-      isPowerupActive = true;
-      
-      powerupElement.classList.add('hidden');
-      powerupPos = { x: -100, y: -100 };
-
-      // Hızı yarıya düşür
-      currentObstacleMoveSpeed /= 2;
-      body.classList.add('slow-motion-body'); 
-
-      setTimeout(deactivatePowerup, POWERUP_DURATION);
-  }
-
-  function deactivatePowerup() {
-      isPowerupActive = false;
-      
-      // Hızı normal zorluk seviyesine geri getir
-      const difficultyBase = Math.floor(score / 10);
-      currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
-      body.classList.remove('slow-motion-body'); 
-  }
-
-  // --- Oyun Kontrol Fonksiyonları ---
-  
-  function getHighScores() {
-    const scores = localStorage.getItem(LEADERBOARD_KEY);
-    return scores ? JSON.parse(scores) : [];
-  }
-  function saveScore(username, score) {
-    let scores = getHighScores();
-    const newScore = { username, score, date: new Date().toLocaleString() };
-    scores.push(newScore);
-    scores.sort((a, b) => b.score - a.score);
-    scores = scores.slice(0, 10); 
-    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(scores));
-  }
-  function showLeaderboard(latestUsername) {
-    const scores = getHighScores();
-    leaderboardList.innerHTML = ''; 
-    if (scores.length === 0) {
-        leaderboardList.innerHTML = '<li>Henüz skor yok! İlk siz olun.</li>';
-        return;
-    }
-    scores.forEach((s, index) => {
-        const listItem = document.createElement('li');
-        const isLatest = s.username === latestUsername && s.score === score;
-        listItem.innerHTML = `
-            <span>${index + 1}. <strong>${s.username}</strong></span>
-            <span>${s.score} <span style="font-size: 0.8em; color: #aaa;">(${s.date.split(',')[0]})</span></span>
-        `;
-        if (isLatest) {
-            listItem.style.color = '#f1c40f'; 
-        }
-        leaderboardList.appendChild(listItem);
-    });
-  }
-
-  function applyTheme(level) {
-      const themeIndex = level % themes.length; 
-      const theme = themes[themeIndex];
-      
-      if (theme.bgImage && theme.bgImage.includes('url')) {
-          body.style.backgroundImage = theme.bgImage;
-          body.style.backgroundColor = theme.bgColor; 
-          body.style.backgroundSize = 'cover';
-          body.style.backgroundPosition = 'center';
-      } else {
-          body.style.backgroundImage = 'none';
-          body.style.backgroundColor = theme.bgColor;
-      }
-      
-      currentObstacleColor = theme.obstacleColor; 
-      document.querySelectorAll('.obstacle-segment').forEach(segment => {
-          segment.style.background = `radial-gradient(circle at 50% 50%, #f7f7f7 0%, ${currentObstacleColor} 100%)`;
-      });
-
-      document.getElementById('scoreboard').textContent = `${themes[themeIndex].name} | Skor: ${score}`;
-  }
-  
-  function loadStartScreenImage() {
-    applyTheme(0);
-  }
-
-  function updateDifficultyAndTheme() {
-    // V36: Görsel her 20 skorda değişir
-    const newLevel = Math.floor(score / 20); 
-    
-    if (!isPowerupActive) { 
-        const difficultyBase = Math.floor(score / 10);
-        // Engel hızı zorluğa göre artar
-        currentObstacleMoveSpeed = initialObstacleMoveSpeed + difficultyBase * 0.2; 
+      if(!invisibilityActive){ gameOver(); return; }
     }
 
-    // Engel spawn aralığı zorluğa göre azalır (daha sık engel)
-    let newInterval = 1500 - Math.floor(score / 10) * 100; 
-    obstacleSpawnInterval = Math.max(newInterval, 600); 
-
-    if (newLevel !== currentLevel) {
-        currentLevel = newLevel;
-        applyTheme(currentLevel);
+    if(m.y > window.innerHeight){
+      m.element.remove(); meteorList.splice(i,1); i--;
+      score++;
+      document.getElementById('scoreValue').textContent=score;
+      METEOR_INTERVAL = Math.max(350, 900 - score*12);
     }
   }
 
-  function startTiming() {
-    if (isGameOver || gameInteractionStarted) return;
-    
-    gameInteractionStarted = true;
-    startTime = Date.now();
-    timerInterval = setInterval(updateTimer, 1000);
-    lastObstacleSpawnTime = Date.now(); 
-    lastPowerupSpawnTime = Date.now(); 
-  }
-  function updateTimer() {
-    if (isGameOver) return;
-    updateDifficultyAndTheme(); 
-    
-    const elapsedTime = Date.now() - startTime;
-    const totalSeconds = Math.floor(elapsedTime / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    
-    const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    document.getElementById('timeValue').textContent = formattedTime;
-  }
-
-  function resetGame() {
-    score = 0;
-    currentLevel = 0;
-    
-    currentObstacleMoveSpeed = initialObstacleMoveSpeed;
-    obstacleSpawnInterval = 1500;
-    isPowerupActive = false;
-    body.classList.remove('slow-motion-body');
-    powerupElement.classList.add('hidden');
-    powerupPos = { x: -100, y: -100 };
-    
-    keys = {};
-    velocityX = 0; 
-    velocityY = 0; 
-
-    document.getElementById('scoreboard').textContent = `${themes[0].name} | Skor: 0`; 
-    document.getElementById('timeValue').textContent = '00:00';
-
-    applyTheme(0); 
-
-    playerPosX = window.innerWidth / 2 - (playerSize / 2);
-    playerPosY = window.innerHeight / 2 - (playerSize / 2);
-    
-    player.style.left = `${playerPosX}px`;
-    player.style.top = `${playerPosY}px`;
-
-    obstacles.forEach(obs => obs.element.remove());
-    obstacles = [];
-    
-    isGameOver = true; 
-    gameInteractionStarted = false; 
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null; 
+  // Power-up collision
+  document.querySelectorAll('.powerup').forEach(p=>{
+    const px = parseFloat(p.style.left);
+    const py = parseFloat(p.style.top);
+    if(px < playerPosX+playerSize && px+35 > playerPosX && py < playerPosY+playerSize && py+35 > playerPosY){
+      activatePowerUp(p.dataset.type);
+      spawnExplosion(px,py);
+      p.remove();
     }
-    clearInterval(timerInterval);
-  }
+  });
 
-  function startGame() {
-    resetGame(); 
-    
-    isGameOver = false;
-    
-    const startScreen = document.getElementById('startScreen');
-    const endScreen = document.getElementById('endScreen');
-    
-    if (startScreen) startScreen.classList.add('hidden');
-    if (endScreen) endScreen.classList.add('hidden');
-    
-    document.getElementById('scoreboard').classList.remove('hidden');
-    document.getElementById('timer').classList.remove('hidden');
+  animationFrameId=requestAnimationFrame(update);
+}
 
-    lastObstacleSpawnTime = Date.now(); 
-    lastPowerupSpawnTime = Date.now();
-    animationFrameId = requestAnimationFrame(update);
-  }
+// === GAME CONTROL ===
+function startGame(){
+  score=0;
+  isGameOver=false;
+  meteorList.forEach(m=>m.element.remove());
+  meteorList=[];
+  if(blackHole){ blackHole.element.remove(); blackHole=null; }
 
-  function gameOver() {
-    if (isGameOver) return;
-    isGameOver = true;
-    
-    playCollisionSound(); 
-    
-    isPowerupActive = false;
-    body.classList.remove('slow-motion-body');
-    powerupElement.classList.add('hidden'); 
-    
-    clearInterval(timerInterval);
-    cancelAnimationFrame(animationFrameId);
-    
-    let username = prompt("Oyun Bitti! Lütfen bir kullanıcı adı girin:", "Anonim");
-    if (username === null || username.trim() === "") {
-        username = "Anonim";
-    }
-    username = username.substring(0, 15); 
-
-    saveScore(username, score);
-
-    document.getElementById('finalScore').textContent = score;
-    document.getElementById('finalTime').textContent = document.
+  playerPosX=window.innerWidth/2;
+  playerPos
+</body>
+</html>
