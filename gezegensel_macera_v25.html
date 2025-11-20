@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V55 - Nihai Fix)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V56 - Ekran Yönetimi Fix)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
@@ -15,6 +15,8 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    /* V56: Başlangıçta tüm vücut görünür olsun */
+    opacity: 1; 
   }
   
   #startScreen h1, #endScreen h1, #pauseScreen h1, #scoreboard {
@@ -346,7 +348,7 @@ window.onload = function() {
   const LEADERBOARD_KEY = 'fallingGameHighScores'; 
   const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
   
-  // GÖRSEL FIX: Resim URL'leri aktif
+  // GÖRSEL URL'leri
   function getImageUrl(index) {
       const urls = [
         'https://picsum.photos/1920/1080?random=1',
@@ -442,7 +444,6 @@ window.onload = function() {
       const themeIndex = level % themes.length; 
       const theme = themes[themeIndex];
       
-      // GÖRSEL FIX: Arka plan resmi eklendi
       body.style.backgroundImage = `url('${getImageUrl(themeIndex)}')`;
       body.style.backgroundColor = theme.bgColor;
 
@@ -540,10 +541,18 @@ window.onload = function() {
         animationFrameId = null; 
     }
     clearInterval(timerInterval);
+    
+    // V56: Bütün ekranları gizle, sadece başlangıcı göster.
+    startScreen.classList.remove('hidden');
+    endScreen.classList.add('hidden');
+    pauseScreen.classList.add('hidden');
+    document.getElementById('scoreboard').classList.add('hidden');
+    document.getElementById('timer').classList.add('hidden');
   }
 
   // Oyun başlatma mantığı
   window.initGameLogic = function() {
+    // V56: Oyun mantığı başlamadan önce resetle
     resetGame(); 
     
     latestUsername = usernameInput.value.trim() || "Anonim";
@@ -551,6 +560,7 @@ window.onload = function() {
     
     isGameOver = false;
     
+    // V56: Başlangıç ekranını kesin olarak kapat
     startScreen.classList.add('hidden');
     endScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
@@ -811,4 +821,53 @@ window.onload = function() {
 
   if (restartButton) {
       restartButton.addEventListener('click', () => {
-          loadStartScreen
+          loadStartScreenImage();
+          window.initGameLogic(); 
+      });
+  }
+  
+  if (resumeButton) {
+      resumeButton.addEventListener('click', togglePause);
+  }
+  
+  if (confirmScoreBtn) {
+      confirmScoreBtn.addEventListener('click', confirmAndShowLeaderboard);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) { 
+        window.initGameLogic(); 
+        e.preventDefault();
+        return;
+    }
+    if (!isGameOver) {
+        if (e.code === 'KeyP' || e.code === 'Escape' || e.code === 'Space') { 
+            togglePause();
+            e.preventDefault(); 
+            return;
+        }
+        if (isPaused) return;
+        if (MOVEMENT_KEYS.includes(e.code)) { startTiming(); }
+        if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = true;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = true;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = true;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = true;
+        keys[e.code] = true;
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (!isGameOver && !isPaused) {
+        if (e.code === 'KeyW' || e.code === 'ArrowUp') keys['ArrowUp'] = false;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown') keys['ArrowDown'] = false;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys['ArrowLeft'] = false;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') keys['ArrowRight'] = false;
+        keys[e.code] = false;
+    }
+  });
+
+}; // window.onload bloğunun sonu
+</script>
+
+</body>
+</html>
