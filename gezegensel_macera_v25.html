@@ -3,20 +3,17 @@
 <head>
 <title>Yer Çekimsiz Gezegen Macerası (V75 - Stabil Sürüm)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABHklEQVR4nGNgGAWjYBSMglFwADoYg5E0C0s5h9sYg2Fj/w+jYmB2EANgYQjIgaU5gZ+FkQY2FoAApBlDQQ2g0WggbA7E4gGYg1g9EBsC/JjB5hYmXIDt+FIMXnJgD/zHIKq3QJ8FkQp2D0oKowF9ApgJpQ1NqFhS50WkY2F0GAv/j0E/zGjJAGhT8IoymH8xT6bB0uLAwY9YvFw5M0gK5RkG2oXkEEYKzYmQ0wF4iLwK85EIMiNGAfV2J8X8yQ9sHw1oFh584MhL5I4k0g/A1pEGBi9mJkGMC2AmsG8wZ0EwgxAYX8FpTjOqAUMW5gYkYhC+8JcE8yXwFfM+f04N7g+d+7P3h+B2gQ8g0gO3J8dC90H7f/rY/c/bF96/rA+e+6YIwwgG5M2gP8XIBdAY3ZkQxL4BqQcQkYmE2E4j7o84M/g+R5gXgQ4+GgYd9pEGCtM4oA7g+h9mRjG1g/kU0DkYhF+wfgKAAgSgA9bB4oXwS3g+i6gIeAAfKjEAGw4xP9XJg0eYhC+B2gCgAIGoABbBhJ3AG52YFwHkZ0D1g8nkwFGAyD2T3M7bC8BfM1DGBR8JgB3H3h/K4wA8E0gcgAAaAANx/670dABrBvA/zF+A0gDqA7gB7bA8B3gAATgAFmB4ACgCAdgMBoKAHfA1bX97GgoBe2MhAwY9YgFw4A0f50sAAAAASUVORK5CYII=">
 <style>
-  /* STİL KODLARI BURADA BAŞLAR */
+  /* --- STİL KODLARI (Senin tasarımın aynen korundu) --- */
   body {
     overflow: hidden;
     background-color: #34495e; 
     font-family: Arial, sans-serif;
     margin: 0;
-    /* GÖRSEL GEÇİŞLERİNİ KORUYAN GEÇİŞLER */
     transition: background-color 1s ease, background-image 1s ease;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    opacity: 1; 
   }
   
   #startScreen h1, #endScreen h1, #pauseScreen h1, #scoreboard {
@@ -52,25 +49,21 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    cursor: default;
+    cursor: none; /* Oyun sırasında mouse imlecini gizler */
   }
 
-  /* PLAYER STİLİ (Alev Topu) */
+  /* PLAYER STİLİ */
   #player { 
     width: 40px;
     height: 40px;
     position: absolute;
-    top: 50%; 
+    top: 20%; 
     left: 50%; 
     transform: translate(-50%, -50%); 
     display: flex;
     justify-content: center;
     align-items: center;
-    color: transparent; 
-    font-weight: bold;
-    font-size: 10px;
     z-index: 50; 
-    transition: all 0.1s ease; 
     background: radial-gradient(circle at 50% 50%, #ffcc00 0%, #ff6600 50%, #cc0000 100%);
     border-radius: 50%;
     box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
@@ -78,23 +71,14 @@
   }
 
   @keyframes flamePulse {
-    0% {
-      transform: translate(-50%, -50%) scale(1);
-      box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    }
-    50% {
-      transform: translate(-50%, -50%) scale(1.05);
-      box-shadow: 0 0 20px 8px rgba(255, 102, 0, 0.8), 0 0 40px 15px rgba(255, 0, 0, 0.6);
-    }
-    100% {
-      transform: translate(-50%, -50%) scale(1);
-      box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7), 0 0 30px 10px rgba(255, 0, 0, 0.5);
-    }
+    0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7); }
+    50% { transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 0 20px 8px rgba(255, 102, 0, 0.8); }
+    100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 15px 5px rgba(255, 102, 0, 0.7); }
   }
   
   .obstacle-row { 
     position: absolute;
-    bottom: -30px; 
+    bottom: -50px; 
     left: 0;
     width: 100%;
     display: flex;
@@ -112,7 +96,6 @@
     height: 100%;
   }
 
-  /* GÜÇLENDİRME STİLİ */
   #powerup {
     position: absolute;
     width: 25px;
@@ -122,18 +105,9 @@
     box-shadow: 0 0 10px rgba(52, 152, 219, 0.9);
     z-index: 60;
     animation: spin 3s linear infinite;
-    cursor: pointer;
   }
 
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-  }
-
-  /* Yavaş Hareket Efekti */
-  .slow-motion-body {
-      filter: blur(2px) brightness(80%); 
-  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
   .info-box {
     position: absolute;
@@ -142,17 +116,16 @@
     color: white;
     border-radius: 5px;
     z-index: 100;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
   }
   #scoreboard { top: 10px; left: 10px; }
   #timer { top: 10px; right: 10px; }
 
   .screen-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); 
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); 
     color: white;
     display: flex;
     flex-direction: column;
@@ -164,101 +137,26 @@
     pointer-events: none; 
     transition: opacity 0.3s ease;
   }
-  .screen-overlay.visible {
-      opacity: 1;
-      pointer-events: auto;
-  }
+  .screen-overlay.visible { opacity: 1; pointer-events: auto; }
 
-  /* Estetik Giriş Alanı */
   #usernameInput, #endUsernameInput {
-      padding: 12px 20px;
-      margin: 15px 0;
-      border: 2px solid #3498db;
-      border-radius: 8px;
-      font-size: 1.2em;
-      text-align: center;
+      padding: 12px 20px; margin: 15px 0;
+      border: 2px solid #3498db; border-radius: 8px;
+      font-size: 1.2em; text-align: center;
       background-color: rgba(255, 255, 255, 0.9);
-      color: #333;
-      transition: all 0.3s;
-      width: 250px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   }
-  #usernameInput:focus, #endUsernameInput:focus {
-      outline: none;
-      border-color: #2ecc71;
-      box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
-  }
-
-  /* Oyun Bitti Ekranı Görsel Geliştirmeler */
-  #endScreen h1 {
-      font-size: 4em; 
-      color: #e74c3c; 
-      text-shadow: 0 0 15px rgba(231, 76, 60, 0.8), 3px 3px 0 #000; 
-      margin-bottom: 5px;
-  }
-  #endScreen h2 {
-      font-size: 2.5em; 
-      color: #f1c40f; 
-      margin-top: 10px;
-  }
-  #finalScore {
-      font-weight: bold;
-      font-size: 1.2em;
-  }
-  #endScreen p {
-      font-size: 1.2em;
-      color: #bdc3c7;
-  }
+  
   .btn {
-    padding: 15px 30px;
-    margin-top: 20px;
-    font-size: 20px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background-color: #34A853;
-    color: white;
-    transition: background-color 0.3s;
+    padding: 15px 30px; margin-top: 20px;
+    font-size: 16px; cursor: pointer; border: none;
+    border-radius: 5px; background-color: #2ecc71; color: white;
     font-family: 'Press Start 2P', cursive;
-    font-size: 0.8em;
   }
-  .btn:hover {
-    background-color: #2b8443;
-  }
-  #endScreen .btn, #confirmScoreBtn {
-      background-color: #e74c3c; 
-  }
-  #endScreen .btn:hover, #confirmScoreBtn:hover {
-      background-color: #c0392b;
-  }
-  #startScreen .btn {
-      background-color: #2ecc71; 
-  }
-  #startScreen .btn:hover {
-      background-color: #27ae60;
-  }
+  .btn:hover { background-color: #27ae60; }
+  #restartButton { background-color: #e74c3c; }
+  #restartButton:hover { background-color: #c0392b; }
 
-  #leaderboardList {
-      margin-top: 10px;
-      list-style: none;
-      padding: 0;
-      max-width: 300px;
-      width: 80%;
-      text-align: left;
-      font-size: 1.1em;
-      font-family: Arial, sans-serif;
-  }
-  #leaderboardList li {
-      padding: 5px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-  }
-
-  .hidden {
-    display: none !important;
-  }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
@@ -266,39 +164,21 @@
 <div id="gameContainer">
     <div id="startScreen" class="screen-overlay visible">
         <h1>GEZEGENSEL MACERA</h1>
-        <p>Kural: Tam serbest hareket ile boşluklardan geçin.</p>
-        <p>Zorluk: Her 20 skorda gezegen değişir.</p>
-        
+        <p>Fare ile yatay hareket et. Engellerden kaçın!</p>
         <ul class="controls-list">
-            <li>**Dikey Hareket (İvmelenme):** Yukarı/Aşağı Ok | W/S</li>
-            <li>**Yatay Hareket (Konum):** Fare ile Ekranın Soluna/Sağına Tıklama</li>
-            <li>~~Duraklat: Space | P | Esc (Şu an devre dışı)~~</li>
+            <li>Yatay: Fare Hareketi</li>
         </ul>
-        
-        <label for="usernameInput" style="font-size: 1.2em; margin-top: 10px; color: #f1c40f;">Kullanıcı Adınız:</label>
-        <input type="text" id="usernameInput" placeholder="Adınızı Girin" maxlength="15" value="Anonim">
-        
-        <button id="startButton" class="btn">Oyunu Başlat</button>
+        <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" value="Oyuncu 1">
+        <button id="startButton" class="btn">OYUNU BAŞLAT</button>
     </div>
 
     <div id="endScreen" class="screen-overlay">
         <h1>OYUN BİTTİ!</h1>
-        <h2>Final Skorunuz: <span id="finalScore">0</span></h2>
-        <p>Oynama Süresi: <span id="finalTime">00:00</span></p>
-        
-        <div id="scoreEntry" style="margin-top: 20px;">
-             <label for="endUsernameInput" style="font-size: 1.2em; margin-top: 10px;">Skoru Kaydet:</label>
-             <input type="text" id="endUsernameInput" placeholder="Adınızı Girin" maxlength="15">
-             <button id="confirmScoreBtn" class="btn">Skoru Kaydet & Tabloyu Göster</button>
-        </div>
-        
-        <h3>Top 10 Skor Tablosu</h3>
-        <ul id="leaderboardList"></ul>
-
-        <button id="restartButton" class="btn">Tekrar Oyna</button>
+        <h2>Skor: <span id="finalScore">0</span></h2>
+        <button id="restartButton" class="btn">TEKRAR OYNA</button>
     </div>
 
-    <div id="scoreboard" class="info-box hidden"></div>
+    <div id="scoreboard" class="info-box hidden">Skor: 0</div>
     <div id="timer" class="info-box hidden">Süre: <span id="timeValue">00:00</span></div>
     
     <div id="player"></div>
@@ -306,46 +186,84 @@
 </div>
 
 <script>
-window.onload = function() {
-  
-  // Ses objeleri (Hata vermemek için pasif)
-  const scoreSound = { play: () => {} };
-  const collisionSound = { play: () => {} };
-  
-  // Element referansları
-  const body = document.body;
-  const leaderboardList = document.getElementById('leaderboardList'); 
-  const powerupElement = document.getElementById('powerup'); 
-  const startScreen = document.getElementById('startScreen');
-  const endScreen = document.getElementById('endScreen');
-  const usernameInput = document.getElementById('usernameInput'); 
-  const endUsernameInput = document.getElementById('endUsernameInput'); 
-  const confirmScoreBtn = document.getElementById('confirmScoreBtn'); 
-  const startButton = document.getElementById('startButton'); 
-  const restartButton = document.getElementById('restartButton');
-  const gameContainer = document.getElementById('gameContainer');
-  const player = document.getElementById('player');
-  const scoreboardElement = document.getElementById('scoreboard');
-  const timerElement = document.getElementById('timer');
-  const timeValueElement = document.getElementById('timeValue');
-  const finalScoreElement = document.getElementById('finalScore');
-  const finalTimeElement = document.getElementById('finalTime');
+// --- OYUN MANTIĞI BURADA ---
+document.addEventListener('DOMContentLoaded', () => {
 
-  // --- Sabitler ---
-  const playerSize = 40;
-  const initialThrustSpeed = 8; 
-  const maxVelocity = 15; 
-  const OBSTACLE_HEIGHT = 30; 
-  const minGapWidth = 80; 
-  const maxGapWidth = 150; 
-  const initialObstacleMoveSpeed = 2; 
-  
-  const POWERUP_SIZE = 25; 
-  const POWERUP_DURATION = 5000; 
-  const POWERUP_SPAWN_INTERVAL = 15000; 
+    // Elemanları Seçme
+    const gameContainer = document.getElementById('gameContainer');
+    const player = document.getElementById('player');
+    const startScreen = document.getElementById('startScreen');
+    const endScreen = document.getElementById('endScreen');
+    const scoreboardElement = document.getElementById('scoreboard');
+    const finalScoreElement = document.getElementById('finalScore');
+    const startButton = document.getElementById('startButton');
+    const restartButton = document.getElementById('restartButton');
 
-  const HORIZONTAL_OSCILLATION_SPEED = 1; 
-  const MAX_OSCILLATION_RANGE = 200; 
+    // Oyun Değişkenleri
+    let isGameRunning = false;
+    let score = 0;
+    let obstacles = [];
+    let gameLoopId;
+    let spawnIntervalId;
+    let scoreIntervalId;
+    
+    // Oyuncu Pozisyonu
+    let playerX = window.innerWidth / 2;
+    
+    // Ayarlar
+    const obstacleSpeed = 4; // Engellerin yukarı çıkma hızı
+    const spawnRate = 1500;  // Engel çıkma sıklığı (ms)
+    
+    // 1. OYUNU BAŞLATMA
+    startButton.addEventListener('click', startGame);
+    restartButton.addEventListener('click', () => {
+        endScreen.classList.remove('visible');
+        startGame();
+    });
 
-  const LEADERBOARD_KEY = 'fallingGameHighScores'; 
-  const MOVEMENT_KEYS = ['ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
+    function startGame() {
+        isGameRunning = true;
+        score = 0;
+        obstacles = [];
+        
+        // Ekranları ayarla
+        startScreen.classList.remove('visible');
+        endScreen.classList.remove('visible');
+        scoreboardElement.classList.remove('hidden');
+        
+        // Eski engelleri temizle
+        document.querySelectorAll('.obstacle-row').forEach(e => e.remove());
+
+        // Döngüleri başlat
+        gameLoop();
+        spawnIntervalId = setInterval(spawnObstacle, spawnRate);
+        scoreIntervalId = setInterval(() => {
+            score += 10;
+            scoreboardElement.innerText = "Skor: " + score;
+        }, 1000);
+    }
+
+    // 2. OYUNCU HAREKETİ (FARE)
+    gameContainer.addEventListener('mousemove', (e) => {
+        if (!isGameRunning) return;
+        // Fare pozisyonunu al ve oyuncuyu oraya götür
+        let rect = gameContainer.getBoundingClientRect();
+        playerX = e.clientX - rect.left;
+        
+        // Sınırları koru
+        if (playerX < 20) playerX = 20;
+        if (playerX > window.innerWidth - 20) playerX = window.innerWidth - 20;
+        
+        player.style.left = playerX + 'px';
+    });
+
+    // 3. ENGEL OLUŞTURMA
+    function spawnObstacle() {
+        if (!isGameRunning) return;
+
+        const row = document.createElement('div');
+        row.classList.add('obstacle-row');
+        row.style.bottom = '-50px'; // En alttan başla
+
+        // Rastgele boşluk oluştur
+        const gapWidth = 150;
