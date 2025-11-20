@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Yer Çekimsiz Gezegen Macerası (V59 - Gömülü Görseller)</title>
+<title>Yer Çekimsiz Gezegen Macerası (V60 - Nihai Düzeltme)</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABHklEQVR4nGNgGAWjYBSMglFwADoYg5E0C0s5h9sYg2Fj/w+jYmB2EANgYQjIgaU5gZ+FkQY2FoAApBlDQQ2g0WggbA7E4gGYg1g9EBsC/JjB5hYmXIDt+FIMXnJgD/zHIKq3QJ8FkQp2D0oKowF9ApgJpQ1NqFhS50WkY2F0GAv/j0E/zGjJAGhT8IoymH8xT6bB0uLAwY9YvFw5M0gK5RkG2oXkEEYKzYmQ0wF4iLwK85EIMiNGAfV2J8X8yQ9sHw1oFh584MhL5I4k0g/A1pEGBi9mJkGMC2AmsG8wZ0EwgxAYX8FpTjOqAUMW5gYkYhC+8JcE8yXwFfM+f04N7g+d+7P3h+B2gQ8g0gO3J8dC90H7f/rY/c/bF96/rA+e+6YIwwgG5M2gP8XIBdAY3ZkQxL4BqQcQkYmE2E4j7o84M/g+R5gXgQ4+GgYd9pEGCtM4oA7g+h9mRjG1g/kU0DkYhF+wfgKAAgSgA9bB4oXwS3g+i6gIeAAfKjEAGw4xP9XJg0eYhC+B2gCgAIGoABbBhJ3AG52YFwHkZ0D1g8nkwFGAyD2T3M7bC8BfM1DGBR8JgB3H3h/K4wA8E0gcgAAaAANx/670dABrBvA/zF+A0gDqA7gB7bA8B3gAATgAFmB4ACgCAdgMBoKAHfA1bX97GgoBe2MhAwY9YgFw4A0f50sAAAAASUVORK5CYII=">
 <style>
@@ -28,13 +28,24 @@
       text-shadow: 0 0 10px rgba(52, 152, 219, 0.8), 2px 2px 0 #000;
   }
   #startScreen p {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 0.7em;
+      font-family: Arial, sans-serif;
+      font-size: 0.9em;
       color: #ecf0f1;
       text-shadow: 1px 1px 0 #000;
       max-width: 80%;
       line-height: 1.5;
   }
+  #startScreen .controls-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 20px;
+      font-size: 0.9em;
+  }
+  #startScreen .controls-list li {
+      margin-bottom: 5px;
+      color: #f1c40f;
+  }
+
 
   #gameContainer {
     position: relative;
@@ -149,9 +160,13 @@
     align-items: center;
     text-align: center;
     z-index: 1000;
+    opacity: 0; /* Başlangıçta gizli */
+    pointer-events: none; /* Etkileşimi engelle */
+    transition: opacity 0.3s ease;
   }
-  .hidden {
-    display: none !important;
+  .screen-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
   }
 
   /* Estetik Giriş Alanı */
@@ -231,6 +246,7 @@
       width: 80%;
       text-align: left;
       font-size: 1.1em;
+      font-family: Arial, sans-serif;
   }
   #leaderboardList li {
       padding: 5px 0;
@@ -249,7 +265,8 @@
   #pauseScreen p {
     font-size: 1.1em;
     color: #ecf0f1;
-    font-family: 'Press Start 2P', cursive;
+    font-family: Arial, sans-serif;
+    margin-top: 10px;
   }
   #pauseScreen .btn {
     background-color: #3498db;
@@ -257,16 +274,25 @@
   #pauseScreen .btn:hover {
     background-color: #2980b9;
   }
+
+  .hidden {
+    display: none !important;
+  }
 </style>
 </head>
 <body>
 
 <div id="gameContainer">
-    <div id="startScreen" class="screen-overlay">
+    <div id="startScreen" class="screen-overlay visible">
         <h1>GEZEGENSEL MACERA</h1>
         <p>Kural: Tam serbest hareket ile boşluklardan geçin.</p>
         <p>Zorluk: Her 20 skorda gezegen değişir.</p>
-        <p>Kontroller: Oklar / WASD / Fare Tıklaması (Yatay hareket)</p>
+        
+        <ul class="controls-list">
+            <li>**Düşey Hareket:** Yukarı/Aşağı Ok | W/S</li>
+            <li>**Yatay Hareket:** Sol/Sağ Ok | A/D | Fare Tıklaması</li>
+            <li>**Duraklat:** Space | P | Esc</li>
+        </ul>
         
         <label for="usernameInput" style="font-size: 1.2em; margin-top: 10px; color: #f1c40f;">Kullanıcı Adınız:</label>
         <input type="text" id="usernameInput" placeholder="Adınızı Girin" maxlength="15" value="Anonim">
@@ -274,7 +300,7 @@
         <button id="startButton" class="btn">Oyunu Başlat</button>
     </div>
 
-    <div id="endScreen" class="screen-overlay hidden">
+    <div id="endScreen" class="screen-overlay">
         <h1>OYUN BİTTİ!</h1>
         <h2>Final Skorunuz: <span id="finalScore">0</span></h2>
         <p>Oynama Süresi: <span id="finalTime">00:00</span></p>
@@ -286,4 +312,72 @@
         </div>
         
         <h3>Top 10 Skor Tablosu</h3>
-        <ul id="
+        <ul id="leaderboardList"></ul>
+
+        <button id="restartButton" class="btn">Tekrar Oyna</button>
+    </div>
+
+    <div id="pauseScreen" class="screen-overlay">
+        <h1>DURAKLATILDI</h1>
+        <p>Devam etmek için **SPACE**, **P** veya **ESC** tuşuna basın.</p>
+        <button id="resumeButton" class="btn">Devam Et</button>
+    </div>
+
+    <div id="scoreboard" class="info-box hidden"></div>
+    <div id="timer" class="info-box hidden">Süre: <span id="timeValue">00:00</span></div>
+    
+    <div id="player"></div>
+    <div id="powerup" class="hidden"></div> 
+</div>
+
+<script>
+window.onload = function() {
+  
+  // Ses objeleri (Hata vermemek için pasif)
+  const scoreSound = { play: () => {} };
+  const collisionSound = { play: () => {} };
+  
+  // Element referansları
+  const body = document.body;
+  const leaderboardList = document.getElementById('leaderboardList'); 
+  const powerupElement = document.getElementById('powerup'); 
+  const startScreen = document.getElementById('startScreen');
+  const endScreen = document.getElementById('endScreen');
+  const pauseScreen = document.getElementById('pauseScreen'); 
+  const usernameInput = document.getElementById('usernameInput'); 
+  const endUsernameInput = document.getElementById('endUsernameInput'); 
+  const confirmScoreBtn = document.getElementById('confirmScoreBtn'); 
+  const startButton = document.getElementById('startButton'); 
+  const restartButton = document.getElementById('restartButton');
+  const resumeButton = document.getElementById('resumeButton'); 
+  const gameContainer = document.getElementById('gameContainer');
+  const player = document.getElementById('player');
+  const scoreboardElement = document.getElementById('scoreboard');
+  const timerElement = document.getElementById('timer');
+  const timeValueElement = document.getElementById('timeValue');
+  const finalScoreElement = document.getElementById('finalScore');
+  const finalTimeElement = document.getElementById('finalTime');
+
+  // --- Sabitler ---
+  const playerSize = 40;
+  const initialThrustSpeed = 8; 
+  const maxVelocity = 15; 
+  const OBSTACLE_HEIGHT = 30; 
+  const minGapWidth = 80; 
+  const maxGapWidth = 150; 
+  const initialObstacleMoveSpeed = 2; 
+  
+  const POWERUP_SIZE = 25; 
+  const POWERUP_DURATION = 5000; 
+  const POWERUP_SPAWN_INTERVAL = 15000; 
+
+  const HORIZONTAL_OSCILLATION_SPEED = 1; 
+  const MAX_OSCILLATION_RANGE = 200; 
+
+  const LEADERBOARD_KEY = 'fallingGameHighScores'; 
+  const PAUSE_KEYS = ['Space', 'KeyP', 'Escape'];
+  const MOVEMENT_KEYS = ['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyS'];
+  
+  // V60 GÜNCELLEMESİ: Düzeltilmiş Gömülü (Base64) uzay/nebula görselleri
+  function getImageUrl(index) {
+      const urls =
